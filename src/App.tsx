@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Workout from './pages/Workout';
 import Nutrition from './pages/Nutrition';
 import Profile from './pages/Profile';
+import CalendarPage from './pages/Calendar';
 import MuscleMapPage from './pages/MuscleMapPage';
 
 
@@ -27,6 +28,7 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="workout" element={<Workout />} />
+            <Route path="calendar" element={<CalendarPage />} />
             <Route path="nutrition" element={<Nutrition />} />
             <Route path="profile" element={<Profile />} />
             <Route path="muscles" element={<MuscleMapPage />} />

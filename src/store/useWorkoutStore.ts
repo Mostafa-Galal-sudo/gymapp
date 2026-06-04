@@ -27,9 +27,17 @@ export interface WorkoutSession {
   isFinished: boolean;
 }
 
+export interface ScheduledSession {
+  id: string;
+  date: string; // YYYY-MM-DD
+  type: string; // e.g. "Push A"
+  exerciseIds: string[];
+}
+
 interface WorkoutState {
   history: WorkoutSession[];
   activeSession: WorkoutSession | null;
+  scheduledSessions: ScheduledSession[];
   suggestDeload: boolean;
   volumeSpikeWarning: boolean;
   startSession: (type: string, exerciseIds: string[]) => void;
@@ -43,6 +51,9 @@ interface WorkoutState {
   finishSession: () => void;
   getSuggestedWeight: (exerciseId: string) => number;
   importData: (data: any) => void;
+  scheduleSession: (date: string, type: string, exerciseIds: string[]) => void;
+  removeScheduledSession: (id: string) => void;
+  updateScheduledSessionDate: (id: string, newDate: string) => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -52,8 +63,21 @@ export const useWorkoutStore = create<WorkoutState>()(
     (set, get) => ({
       history: [],
       activeSession: null,
+      scheduledSessions: [],
       suggestDeload: false,
       volumeSpikeWarning: false,
+
+      scheduleSession: (date, type, exerciseIds) => set((state) => ({
+        scheduledSessions: [...state.scheduledSessions, { id: generateId(), date, type, exerciseIds }]
+      })),
+
+      removeScheduledSession: (id) => set((state) => ({
+        scheduledSessions: state.scheduledSessions.filter(s => s.id !== id)
+      })),
+
+      updateScheduledSessionDate: (id, newDate) => set((state) => ({
+        scheduledSessions: state.scheduledSessions.map(s => s.id === id ? { ...s, date: newDate } : s)
+      })),
 
       startSession: (type, exerciseIds) => {
         const exercises: WorkoutExercise[] = exerciseIds.map(id => {
@@ -221,7 +245,11 @@ export const useWorkoutStore = create<WorkoutState>()(
         return 0; // Default if no history
       },
       
-      importData: (data) => set({ history: data.history || [], activeSession: data.activeSession || null })
+      importData: (data) => set({ 
+        history: data.history || [], 
+        activeSession: data.activeSession || null,
+        scheduledSessions: data.scheduledSessions || []
+      })
     }),
     {
       name: 'omnibody-workout-storage',

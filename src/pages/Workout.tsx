@@ -603,12 +603,18 @@ const Workout = () => {
   const t = useT();
   const activeSession = useWorkoutStore(s => s.activeSession);
   const startSession  = useWorkoutStore(s => s.startSession);
+  const scheduledSessions = useWorkoutStore(s => s.scheduledSessions);
+  const removeScheduledSession = useWorkoutStore(s => s.removeScheduledSession);
   const getAllTemplates = useExerciseStore(s => s.getAllTemplates);
   const [modalType, setModalType] = useState<'create' | null>(null);
 
   if (activeSession) return <WorkoutPlayer />;
 
   const schedules = getAllTemplates();
+  
+  const today = new Date();
+  const dStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+  const todaysPlans = scheduledSessions.filter(s => s.date === dStr);
 
   return (
     <div className="page">
@@ -622,7 +628,37 @@ const Workout = () => {
           <Plus size={14} style={{ marginRight: 4 }} /> Custom Ex
         </button>
       </header>
+
+      {todaysPlans.length > 0 && (
+        <div style={{ marginBottom: '2rem' }}>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--gold)' }}>
+            {t('calendar.todays_plan') || "Today's Plan"}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {todaysPlans.map(plan => (
+              <div key={plan.id} className="glass-card animate-fade-up" style={{ padding: '1.25rem', borderLeft: '3px solid var(--gold)', background: 'rgba(255, 215, 0, 0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 700 }}>{plan.type}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>{plan.exerciseIds.length} {t('workout.exercises')}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={() => removeScheduledSession(plan.id)} style={{ color: 'var(--magenta)', padding: '0.5rem', background: 'rgba(255, 0, 85, 0.1)', borderRadius: '8px' }}>
+                      <X size={16} />
+                    </button>
+                    <button onClick={() => startSession(plan.type, plan.exerciseIds)} className="btn-primary" style={{ padding: '0.6rem 1.1rem', fontSize: '0.85rem', background: 'var(--gold)', color: '#000', borderColor: 'var(--gold)' }}>
+                      <Play size={16} /> {t('workout.start')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+        <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 700, margin: '1rem 0 0.5rem 0' }}>All Programs</h2>
         {Object.entries(schedules).map(([name, exerciseIds]) => (
           <div key={name} className="glass-card animate-fade-up" style={{ padding: '1.25rem', borderLeft: '3px solid var(--cyan)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

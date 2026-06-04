@@ -1,16 +1,17 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Dumbbell, Salad, User, Accessibility } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Salad, User, Accessibility, CalendarDays } from 'lucide-react';
 import styles from './MainLayout.module.css';
 import { useT } from '../../hooks/useT';
 
 const MainLayout = () => {
   const t = useT();
   const NAV = [
-    { to: '/dashboard', labelKey: 'nav.home',    Icon: LayoutDashboard },
-    { to: '/workout',   labelKey: 'nav.train',   Icon: Dumbbell },
-    { to: '/muscles',   labelKey: 'nav.anatomy', Icon: Accessibility },
-    { to: '/nutrition', labelKey: 'nav.fuel',    Icon: Salad },
-    { to: '/profile',   labelKey: 'nav.profile', Icon: User },
+    { to: '/dashboard', labelKey: 'nav.dashboard', Icon: LayoutDashboard },
+    { to: '/workout',   labelKey: 'nav.workout',   Icon: Dumbbell },
+    { to: '/calendar',  labelKey: 'nav.calendar',  Icon: CalendarDays },
+    { to: '/muscles',   labelKey: 'nav.muscles',   Icon: Accessibility },
+    { to: '/nutrition', labelKey: 'nav.nutrition', Icon: Salad },
+    { to: '/profile',   labelKey: 'nav.profile',   Icon: User },
   ] as const;
 
   return (

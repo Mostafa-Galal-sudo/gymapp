@@ -2,13 +2,16 @@ export type Lang = 'en' | 'ar';
 
 export const translations = {
   en: {
-    // ── Nav ──────────────────────────────────────────────────────
-    'nav.home':     'Home',
-    'nav.train':    'Train',
-    'nav.anatomy':  'Anatomy',
-    'nav.fuel':     'Fuel',
-    'nav.profile':  'Profile',
-
+    // ── Navigation ───────────────────────────────────────────────
+    'nav.dashboard':    'Dashboard',
+    'nav.workout':      'Workout',
+    'nav.nutrition':    'Nutrition',
+    'nav.profile':      'Profile',
+    'nav.muscles':      'Muscles',
+    'nav.calendar':     'Calendar',
+    'calendar.schedule_workout': 'Schedule Workout',
+    'calendar.todays_plan': "Today's Plan",
+    'calendar.no_plans': 'No workouts planned',
     // ── Common ───────────────────────────────────────────────────
     'common.loading':   'Loading...',
     'common.save':      'Save',
@@ -235,6 +238,12 @@ export const translations = {
     'nav.anatomy':  'تشريح',
     'nav.fuel':     'تغذية',
     'nav.profile':  'ملفي',
+    'nav.calendar':     'الجدول',
+
+    // ── Calendar ────────────────────────────────────────────────
+    'calendar.schedule_workout': 'جدولة تمرين',
+    'calendar.todays_plan':      'خطة اليوم',
+    'calendar.no_plans':         'لا توجد تمارين مجدولة',
 
     // ── Common ───────────────────────────────────────────────────
     'common.loading':   'جاري التحميل...',
