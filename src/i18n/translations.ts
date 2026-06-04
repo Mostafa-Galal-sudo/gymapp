@@ -233,12 +233,16 @@ export const translations = {
 
   ar: {
     // ── Nav ──────────────────────────────────────────────────────
-    'nav.home':     'الرئيسية',
-    'nav.train':    'تمرين',
-    'nav.anatomy':  'تشريح',
-    'nav.fuel':     'تغذية',
-    'nav.profile':  'ملفي',
-    'nav.calendar':     'الجدول',
+    'nav.home':       'الرئيسية',
+    'nav.train':      'تمرين',
+    'nav.anatomy':    'تشريح',
+    'nav.fuel':       'تغذية',
+    'nav.dashboard':  'الرئيسية',
+    'nav.workout':    'تمرين',
+    'nav.muscles':    'عضلات',
+    'nav.nutrition':  'تغذية',
+    'nav.profile':    'ملفي',
+    'nav.calendar':   'الجدول',
 
     // ── Calendar ────────────────────────────────────────────────
     'calendar.schedule_workout': 'جدولة تمرين',

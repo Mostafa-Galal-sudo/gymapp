@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useWorkoutStore } from '../store/useWorkoutStore';
 import { useExerciseStore } from '../store/useExerciseStore';
 import { useT } from '../hooks/useT';
@@ -108,45 +109,47 @@ const CalendarPage = () => {
   };
 
   return (
-    <div className="page" style={{ padding: '1rem 1rem 7rem' }}>
-      <header style={{ marginBottom: '2rem' }}>
-        <div className="section-label">{t('nav.calendar')}</div>
-        <h1 className="display" style={{ fontSize: '2.5rem' }}>{t('nav.calendar')}</h1>
-      </header>
+    <>
+      <div className="page" style={{ padding: '1rem 1rem 7rem' }}>
+        <header style={{ marginBottom: '2rem' }}>
+          <div className="section-label">{t('nav.calendar')}</div>
+          <h1 className="display" style={{ fontSize: '2.5rem' }}>{t('nav.calendar')}</h1>
+        </header>
 
-      {/* Calendar Header */}
-      <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <button onClick={prevMonth} className="btn-secondary" style={{ padding: '0.5rem' }}>
-            <ChevronLeft size={20} />
-          </button>
-          <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-heading)', fontWeight: 700, margin: 0 }}>
-            {monthNames[month]} {year}
-          </h2>
-          <button onClick={nextMonth} className="btn-secondary" style={{ padding: '0.5rem' }}>
-            <ChevronRight size={20} />
-          </button>
+        {/* Calendar Header */}
+        <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <button onClick={prevMonth} className="btn-secondary" style={{ padding: '0.5rem' }}>
+              <ChevronLeft size={20} />
+            </button>
+            <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-heading)', fontWeight: 700, margin: 0 }}>
+              {monthNames[month]} {year}
+            </h2>
+            <button onClick={nextMonth} className="btn-secondary" style={{ padding: '0.5rem' }}>
+              <ChevronRight size={20} />
+            </button>
+          </div>
+
+          {/* Weekday Names */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', marginBottom: '0.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d}>{d}</div>)}
+          </div>
+
+          {/* Days Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem' }}>
+            {renderDays()}
+          </div>
         </div>
 
-        {/* Weekday Names */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', marginBottom: '0.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d}>{d}</div>)}
-        </div>
-
-        {/* Days Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem' }}>
-          {renderDays()}
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--cyan)' }}></div>
-          Completed
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)' }}></div>
-          Scheduled
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--cyan)' }}></div>
+            مكتمل
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)' }}></div>
+            مجدول
+          </div>
         </div>
       </div>
 
@@ -160,7 +163,7 @@ const CalendarPage = () => {
           templates={getAllTemplates()}
         />
       )}
-    </div>
+    </>
   );
 };
 
@@ -174,7 +177,7 @@ const DayModal = ({ date, onClose, dayStatus, scheduleSession, removeScheduledSe
     setView('list');
   };
 
-  return (
+  const content = (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 1000,
       background: 'rgba(2, 4, 8, 0.85)', backdropFilter: 'blur(8px)',
@@ -256,13 +259,15 @@ const DayModal = ({ date, onClose, dayStatus, scheduleSession, removeScheduledSe
               ))}
             </div>
             <button onClick={() => setView('list')} className="btn-secondary" style={{ width: '100%', padding: '1rem', marginTop: '1rem' }}>
-              Cancel
+              إلغاء
             </button>
           </>
         )}
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 };
 
 export default CalendarPage;
