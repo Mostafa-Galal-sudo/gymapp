@@ -61,7 +61,7 @@ export const useUserStore = create<UserState>()(
       profile: DEFAULT_PROFILE,
       supplements: DEFAULT_SUPPLEMENTS,
       weightHistory: [{ date: Date.now() - 7 * 86400000, weight: 77.5 }, { date: Date.now(), weight: 78 }],
-      isAuthenticated: false,
+      isAuthenticated: true,
       login: () => set({ isAuthenticated: true }),
       logout: () => set({ isAuthenticated: false, profile: DEFAULT_PROFILE, supplements: DEFAULT_SUPPLEMENTS, weightHistory: [] }),
       updateProfile: (updates) => set((state) => ({ profile: { ...state.profile, ...updates } })),

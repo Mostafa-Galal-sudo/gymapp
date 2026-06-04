@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useUserStore } from './store/useUserStore';
 import { useLanguageStore } from './store/useLanguageStore';
 import MainLayout from './components/layout/MainLayout';
-import Auth from './pages/Auth';
+
 import { MigrationGate } from './components/MigrationGate';
 import Dashboard from './pages/Dashboard';
 import Workout from './pages/Workout';
@@ -11,10 +11,6 @@ import Nutrition from './pages/Nutrition';
 import Profile from './pages/Profile';
 import MuscleMapPage from './pages/MuscleMapPage';
 
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
-  return isAuthenticated ? <>{children}</> : <Navigate to="/auth" />;
-};
 
 function App() {
   const lang = useLanguageStore(s => s.lang);
@@ -28,9 +24,7 @@ function App() {
     <MigrationGate>
       <BrowserRouter>
         <Routes>
-          <Route path="/auth" element={<Auth />} />
-          
-          <Route path="/" element={<PrivateRoute><MainLayout /></PrivateRoute>}>
+          <Route path="/" element={<MainLayout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="workout" element={<Workout />} />
