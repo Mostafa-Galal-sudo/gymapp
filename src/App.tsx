@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useUserStore } from './store/useUserStore';
 import { useLanguageStore } from './store/useLanguageStore';
 import MainLayout from './components/layout/MainLayout';
 
