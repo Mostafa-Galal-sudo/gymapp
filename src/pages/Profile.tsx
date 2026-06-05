@@ -1,13 +1,15 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/useUserStore';
 import { useWorkoutStore } from '../store/useWorkoutStore';
 import { useNutritionStore } from '../store/useNutritionStore';
 import { useGamificationStore } from '../store/useGamificationStore';
+import { useDeviceStore } from '../store/useDeviceStore';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
-import { Download, Upload, Save, Trophy, Plus, ShieldAlert, Watch, Activity, HeartPulse, ShieldCheck, Globe, ChevronUp, ChevronDown } from 'lucide-react';
+import { Download, Upload, Save, Trophy, Plus, ShieldAlert, Watch, Activity, HeartPulse, ShieldCheck, Globe, ChevronUp, ChevronDown, Edit2, Camera, X, Loader2 } from 'lucide-react';
 import { useT } from '../hooks/useT';
 import { useLanguageStore } from '../store/useLanguageStore';
 import { Capacitor } from '@capacitor/core';
@@ -28,6 +30,215 @@ const ChartTooltip = ({ active, payload, label }: any) => {
     </div>
   );
 };
+
+// ── Edit Profile Modal ────────────────────────────────────────────────────────
+const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
+  const { profile, updateProfile } = useUserStore();
+  const [form, setForm] = useState({ ...profile });
+  const photoRef = useRef<HTMLInputElement>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(profile.profilePhoto || null);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      // Compress image to max 400x400
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const max = 400;
+        const scale = Math.min(max / img.width, max / img.height, 1);
+        canvas.width  = img.width  * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const compressed = canvas.toDataURL('image/jpeg', 0.8);
+        setPhotoPreview(compressed);
+        setForm(f => ({ ...f, profilePhoto: compressed }));
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = () => {
+    updateProfile(form);
+    onClose();
+  };
+
+  const content = (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 2000,
+      background: 'rgba(2,4,8,0.9)', backdropFilter: 'blur(16px)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '1.5rem', animation: 'fadeIn 0.2s ease'
+    }}>
+      <div className="glass-card" style={{ width: '100%', maxWidth: 440, padding: '1.5rem', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', color: 'var(--color-text-muted)' }}>
+          <X size={20} />
+        </button>
+        <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>
+          تعديل الملف الشخصي
+        </h3>
+
+        {/* Photo Upload */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div
+            onClick={() => photoRef.current?.click()}
+            style={{
+              width: 100, height: 100, borderRadius: '50%', cursor: 'pointer', position: 'relative',
+              background: photoPreview ? 'none' : 'linear-gradient(135deg, var(--cyan), var(--magenta))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              overflow: 'hidden', boxShadow: 'var(--shadow-cyan)'
+            }}
+          >
+            {photoPreview ? (
+              <img src={photoPreview} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', color: '#000' }}>
+                {form.name[0]?.toUpperCase()}
+              </span>
+            )}
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
+            >
+              <Camera size={24} color="#fff" />
+            </div>
+          </div>
+          <input type="file" accept="image/*" ref={photoRef} style={{ display: 'none' }} onChange={handlePhotoChange} />
+          <button onClick={() => photoRef.current?.click()} style={{ color: 'var(--cyan)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+            <Camera size={14} style={{ display: 'inline', marginRight: 4 }} /> تغيير الصورة
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>الاسم</label>
+            <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={{ width: '100%' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>العمر</label>
+              <input type="number" value={form.age} onChange={e => setForm(f => ({ ...f, age: +e.target.value }))} style={{ width: '100%' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>الوزن (كغ)</label>
+              <input type="number" value={form.weight} onChange={e => setForm(f => ({ ...f, weight: +e.target.value }))} style={{ width: '100%' }} />
+            </div>
+          </div>
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>الطول (سم)</label>
+            <input type="number" value={form.height} onChange={e => setForm(f => ({ ...f, height: +e.target.value }))} style={{ width: '100%' }} />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>المستوى</label>
+            <select value={form.level} onChange={e => setForm(f => ({ ...f, level: e.target.value }))} style={{ width: '100%' }}>
+              {['Beginner', 'Intermediate', 'Advanced', 'Elite'].map(l => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+          <button onClick={onClose} className="btn-secondary" style={{ flex: 1, padding: '0.9rem' }}>إلغاء</button>
+          <button onClick={handleSave} className="btn-primary" style={{ flex: 1, padding: '0.9rem' }}>
+            <Save size={16} style={{ display: 'inline', marginRight: 4 }} /> حفظ
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(content, document.body);
+};
+
+// ── Garmin BLE Connect ────────────────────────────────────────────────────────
+const GarminConnectButton = () => {
+  const navigate = useNavigate();
+  const { isConnected, deviceName, setConnected, setCurrentHR } = useDeviceStore();
+  const [scanning, setScanning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const charRef = useRef<any>(null);
+
+  const handleConnect = async () => {
+    setError(null);
+    if (!('bluetooth' in navigator)) {
+      setError('البلوتوث غير مدعوم في هذا المتصفح. استخدم Chrome على Android.');
+      return;
+    }
+    setScanning(true);
+    try {
+      const device = await (navigator as any).bluetooth.requestDevice({
+        filters: [{ services: ['heart_rate'] }],
+        optionalServices: ['heart_rate'],
+      });
+
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService('heart_rate');
+      const characteristic = await service.getCharacteristic('heart_rate_measurement');
+
+      charRef.current = characteristic;
+
+      await characteristic.startNotifications();
+      characteristic.addEventListener('characteristicvaluechanged', (e: any) => {
+        const value = e.target.value;
+        // Parse Heart Rate Measurement per BLE spec
+        const flags = value.getUint8(0);
+        const is16bit = flags & 0x1;
+        const hr = is16bit ? value.getUint16(1, true) : value.getUint8(1);
+        setCurrentHR(hr);
+      });
+
+      device.addEventListener('gattserverdisconnected', () => {
+        setScanning(false);
+      });
+
+      setConnected(device.name || 'Garmin Device');
+      setScanning(false);
+      navigate('/device-live');
+    } catch (err: any) {
+      setScanning(false);
+      if (err.name !== 'NotFoundError') {
+        setError('فشل الاتصال: ' + (err.message || 'خطأ غير معروف'));
+      }
+    }
+  };
+
+  if (isConnected) {
+    return (
+      <button onClick={() => navigate('/device-live')}
+        style={{
+          background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)',
+          borderRadius: '8px', padding: '0.4rem 0.75rem', fontSize: '0.75rem',
+          color: '#22c55e', display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer'
+        }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
+        {deviceName} · فتح
+      </button>
+    );
+  }
+
+  return (
+    <div>
+      <button onClick={handleConnect} disabled={scanning}
+        style={{
+          background: scanning ? 'rgba(0,240,255,0.05)' : 'rgba(0,240,255,0.1)',
+          border: '1px solid rgba(0,240,255,0.3)',
+          borderRadius: '8px', padding: '0.4rem 0.75rem', fontSize: '0.75rem',
+          color: 'var(--cyan)', display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: scanning ? 'not-allowed' : 'pointer'
+        }}>
+        {scanning ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <HeartPulse size={14} />}
+        {scanning ? 'جاري البحث...' : 'اتصال حقيقي'}
+      </button>
+      {error && <div style={{ fontSize: '0.65rem', color: 'var(--magenta)', marginTop: '0.3rem', maxWidth: 200 }}>{error}</div>}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+};
+
+// ── imports needed for modals via portal
+import { createPortal } from 'react-dom';
 
 // ── Trophy Room ───────────────────────────────────────────────────────────────
 const TrophyRoom = () => {

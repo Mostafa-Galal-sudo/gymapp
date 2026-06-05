@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useWorkoutStore } from '../store/useWorkoutStore';
 import { useExerciseStore } from '../store/useExerciseStore';
+import { useDeviceStore } from '../store/useDeviceStore';
 import { useT } from '../hooks/useT';
-import { ChevronLeft, ChevronRight, Plus, X, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Calendar as CalendarIcon, CheckCircle2, HeartPulse } from 'lucide-react';
 
 const CalendarPage = () => {
   const t = useT();
@@ -16,12 +17,13 @@ const CalendarPage = () => {
   const scheduleSession = useWorkoutStore(s => s.scheduleSession);
   const removeScheduledSession = useWorkoutStore(s => s.removeScheduledSession);
   const getAllTemplates = useExerciseStore(s => s.getAllTemplates);
+  const deviceSessions = useDeviceStore(s => s.sessions);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 = Sunday
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
@@ -31,7 +33,6 @@ const CalendarPage = () => {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  // Helper to format date as YYYY-MM-DD local time
   const formatDateString = (d: Date) => {
     const y = d.getFullYear();
     const m = (d.getMonth() + 1).toString().padStart(2, '0');
@@ -41,17 +42,20 @@ const CalendarPage = () => {
 
   const getDayStatus = (d: Date) => {
     const dStr = formatDateString(d);
-    
-    // Check history (completed)
+
     const completed = history.filter(h => {
       const hd = new Date(h.date);
       return formatDateString(hd) === dStr;
     });
 
-    // Check scheduled
     const scheduled = scheduledSessions.filter(s => s.date === dStr);
 
-    return { completed, scheduled };
+    const deviceDay = deviceSessions.filter(s => {
+      const sd = new Date(s.date);
+      return formatDateString(sd) === dStr;
+    });
+
+    return { completed, scheduled, deviceSessions: deviceDay };
   };
 
   const handleDayClick = (day: number) => {
@@ -63,7 +67,6 @@ const CalendarPage = () => {
     const days = [];
     const todayStr = formatDateString(new Date());
 
-    // Padding for previous month
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(<div key={`empty-${i}`} style={{ opacity: 0.1 }}></div>);
     }
@@ -72,14 +75,17 @@ const CalendarPage = () => {
       const d = new Date(year, month, day);
       const dStr = formatDateString(d);
       const isToday = dStr === todayStr;
-      
-      const { completed, scheduled } = getDayStatus(d);
-      
+
+      const { completed, scheduled, deviceSessions: deviceDay } = getDayStatus(d);
+
       const hasCompleted = completed.length > 0;
       const hasScheduled = scheduled.length > 0;
+      const hasDevice = deviceDay.length > 0;
 
+      // Priority: completed > device > scheduled
       let dotColor = 'transparent';
       if (hasCompleted) dotColor = 'var(--cyan)';
+      else if (hasDevice) dotColor = 'var(--magenta)';
       else if (hasScheduled) dotColor = 'var(--gold)';
 
       days.push(
@@ -96,12 +102,18 @@ const CalendarPage = () => {
           }}
         >
           <span style={{ fontSize: '1rem', fontWeight: 600 }}>{day}</span>
-          {(hasCompleted || hasScheduled) && (
-            <div style={{
-              width: 6, height: 6, borderRadius: '50%', background: dotColor,
-              position: 'absolute', bottom: '6px'
-            }} />
-          )}
+          {/* Multi-dot row when multiple event types */}
+          <div style={{ display: 'flex', gap: 3, position: 'absolute', bottom: '5px' }}>
+            {hasCompleted && (
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--cyan)' }} />
+            )}
+            {hasDevice && (
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--magenta)' }} />
+            )}
+            {hasScheduled && !hasCompleted && (
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--gold)' }} />
+            )}
+          </div>
         </div>
       );
     }
@@ -116,7 +128,6 @@ const CalendarPage = () => {
           <h1 className="display" style={{ fontSize: '2.5rem' }}>{t('nav.calendar')}</h1>
         </header>
 
-        {/* Calendar Header */}
         <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <button onClick={prevMonth} className="btn-secondary" style={{ padding: '0.5rem' }}>
@@ -130,21 +141,24 @@ const CalendarPage = () => {
             </button>
           </div>
 
-          {/* Weekday Names */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', marginBottom: '0.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d}>{d}</div>)}
           </div>
 
-          {/* Days Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem' }}>
             {renderDays()}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+        {/* Legend */}
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--color-text-muted)', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--cyan)' }}></div>
             مكتمل
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--magenta)' }}></div>
+            جلسة جارمن
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)' }}></div>
@@ -154,8 +168,8 @@ const CalendarPage = () => {
       </div>
 
       {showModal && selectedDate && (
-        <DayModal 
-          date={selectedDate} 
+        <DayModal
+          date={selectedDate}
           onClose={() => setShowModal(false)}
           dayStatus={getDayStatus(selectedDate)}
           scheduleSession={scheduleSession}
@@ -167,15 +181,70 @@ const CalendarPage = () => {
   );
 };
 
+// ── Device Session Card ───────────────────────────────────────────────────────
+const DeviceSessionCard = ({ session }: { session: any }) => {
+  const formatDuration = (s: number) =>
+    `${Math.floor(s / 60)}د ${s % 60}ث`;
+
+  const zonesWithTime = session.zones?.filter((z: any) => z.minutes > 0) ?? [];
+
+  return (
+    <div style={{
+      background: 'rgba(255,0,85,0.05)', border: '1px solid rgba(255,0,85,0.2)',
+      borderRadius: '12px', padding: '1rem', marginBottom: '1rem'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <div style={{ fontWeight: 600, color: 'var(--magenta)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <HeartPulse size={16} /> {session.deviceName}
+        </div>
+        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+          {formatDuration(session.duration)}
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: zonesWithTime.length ? '0.75rem' : 0 }}>
+        {[
+          { label: 'متوسط', val: session.avgHR, color: 'var(--cyan)' },
+          { label: 'أعلى', val: session.maxHR, color: 'var(--magenta)' },
+          { label: 'أدنى', val: session.minHR, color: 'var(--gold)' },
+        ].map(({ label, val, color }) => (
+          <div key={label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', padding: '0.4rem' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 700, color }}>{val}</div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)' }}>{label} · bpm</div>
+          </div>
+        ))}
+      </div>
+      {zonesWithTime.length > 0 && (
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {zonesWithTime.map((z: any, i: number) => (
+            <div key={i} style={{
+              fontSize: '0.65rem', padding: '0.2rem 0.5rem',
+              borderRadius: '999px', background: `${z.color}20`, color: z.color,
+              border: `1px solid ${z.color}40`
+            }}>
+              {z.name} · {z.minutes.toFixed(1)}د
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── Day Modal ─────────────────────────────────────────────────────────────────
 const DayModal = ({ date, onClose, dayStatus, scheduleSession, removeScheduledSession, templates }: any) => {
   const t = useT();
   const [view, setView] = useState<'list' | 'add'>('list');
   const dStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-  
+
   const handleAdd = (name: string, ids: string[]) => {
     scheduleSession(dStr, name, ids);
     setView('list');
   };
+
+  const hasAnything =
+    dayStatus.completed.length > 0 ||
+    dayStatus.scheduled.length > 0 ||
+    dayStatus.deviceSessions.length > 0;
 
   const content = (
     <div style={{
@@ -192,7 +261,7 @@ const DayModal = ({ date, onClose, dayStatus, scheduleSession, removeScheduledSe
         <button onClick={onClose} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', color: 'var(--color-text-muted)' }}>
           <X size={20} />
         </button>
-        
+
         <h3 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-heading)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <CalendarIcon size={22} className="neon-cyan" />
           {date.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
@@ -200,12 +269,18 @@ const DayModal = ({ date, onClose, dayStatus, scheduleSession, removeScheduledSe
 
         {view === 'list' ? (
           <>
-            {dayStatus.completed.length === 0 && dayStatus.scheduled.length === 0 && (
+            {!hasAnything && (
               <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
                 {t('calendar.no_plans') || 'No workouts planned.'}
               </div>
             )}
 
+            {/* Device sessions */}
+            {dayStatus.deviceSessions.map((session: any) => (
+              <DeviceSessionCard key={session.id} session={session} />
+            ))}
+
+            {/* Completed workout sessions */}
             {dayStatus.completed.map((session: any) => (
               <div key={session.sessionId} style={{
                 background: 'rgba(0, 240, 255, 0.05)', border: '1px solid rgba(0, 240, 255, 0.2)',
@@ -223,6 +298,7 @@ const DayModal = ({ date, onClose, dayStatus, scheduleSession, removeScheduledSe
               </div>
             ))}
 
+            {/* Scheduled sessions */}
             {dayStatus.scheduled.map((session: any) => (
               <div key={session.id} style={{
                 background: 'rgba(255, 215, 0, 0.05)', border: '1px solid rgba(255, 215, 0, 0.2)',

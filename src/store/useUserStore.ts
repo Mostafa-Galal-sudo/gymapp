@@ -16,6 +16,7 @@ export interface UserProfile {
   height: number;
   level: string;
   goals: string[];
+  profilePhoto?: string; // base64 data URL
 }
 
 export interface WeightEntry {

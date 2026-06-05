@@ -9,6 +9,7 @@ import Workout from './pages/Workout';
 import Nutrition from './pages/Nutrition';
 import Profile from './pages/Profile';
 import CalendarPage from './pages/Calendar';
+import DeviceLive from './pages/DeviceLive';
 import MuscleMapPage from './pages/MuscleMapPage';
 
 
@@ -32,6 +33,7 @@ function App() {
             <Route path="nutrition" element={<Nutrition />} />
             <Route path="profile" element={<Profile />} />
             <Route path="muscles" element={<MuscleMapPage />} />
+            <Route path="device-live" element={<DeviceLive />} />
           </Route>
         </Routes>
       </BrowserRouter>
