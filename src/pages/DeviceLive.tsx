@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 
 const ZONE_COLORS = ['#60a5fa', '#34d399', '#fbbf24', '#f87171'];
-const ZONE_NAMES  = ['راحة', 'حرق دهون', 'كارديو', 'ذروة'];
+const ZONE_NAMES = ['راحة', 'حرق دهون', 'كارديو', 'ذروة'];
 const ZONE_RANGES = [[0, 100], [100, 130], [130, 160], [160, 999]];
 
 const getZone = (hr: number) => {
@@ -89,12 +89,10 @@ const DeviceLive = () => {
   const [finishedSession, setFinishedSession] = useState<any>(null);
   const intervalRef = useRef<any>(null);
 
-  // Redirect if not connected
   useEffect(() => {
     if (!isConnected) navigate('/profile');
   }, [isConnected, navigate]);
 
-  // Elapsed timer
   useEffect(() => {
     if (sessionActive) {
       intervalRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
@@ -104,7 +102,6 @@ const DeviceLive = () => {
     return () => clearInterval(intervalRef.current);
   }, [sessionActive]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => { clearInterval(intervalRef.current); };
   }, []);
@@ -121,7 +118,7 @@ const DeviceLive = () => {
 
   const zoneIdx = currentHR ? getZone(currentHR) : 0;
   const zoneColor = ZONE_COLORS[zoneIdx];
-  const zoneName  = ZONE_NAMES[zoneIdx];
+  const zoneName = ZONE_NAMES[zoneIdx];
 
   const chartData = liveHRData.slice(-60).map(d => ({
     t: `${Math.floor(d.time / 60)}:${(d.time % 60).toString().padStart(2, '0')}`,
@@ -140,7 +137,6 @@ const DeviceLive = () => {
         />
       )}
 
-      {/* Header */}
       <header style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div className="section-label">جارمن · بلوتوث</div>
@@ -153,38 +149,26 @@ const DeviceLive = () => {
         </button>
       </header>
 
-      {/* Device Badge */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--cyan)', fontSize: '0.85rem' }}>
         <Wifi size={14} />
         <span>{deviceName}</span>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
       </div>
 
-      {/* HR Display */}
       <div className="glass-card" style={{ padding: '2rem', marginBottom: '1.5rem', textAlign: 'center', border: `1px solid ${zoneColor}40`, boxShadow: `0 0 30px ${zoneColor}20` }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <Heart
-            size={28}
-            fill={zoneColor}
-            color={zoneColor}
-            style={{ animation: currentHR ? 'heartbeat 0.8s ease infinite' : 'none' }}
-          />
+          <Heart size={28} fill={zoneColor} color={zoneColor} style={{ animation: currentHR ? 'heartbeat 0.8s ease infinite' : 'none' }} />
           <span style={{ fontSize: '0.75rem', color: zoneColor, letterSpacing: '0.15em', textTransform: 'uppercase' }}>{zoneName}</span>
         </div>
 
-        <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: '5rem', fontWeight: 900,
-          color: zoneColor, lineHeight: 1,
-          filter: `drop-shadow(0 0 20px ${zoneColor})`,
-          transition: 'color 0.5s'
-        }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '5rem', fontWeight: 900, color: zoneColor, lineHeight: 1, filter: `drop-shadow(0 0 20px ${zoneColor})`, transition: 'color 0.5s' }}>
           {currentHR ?? '--'}
         </div>
         <div style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', marginTop: '0.5rem' }}>ضربة / دقيقة</div>
 
-        {/* Zone Bars */}
+        {/* Zone Bars — _ because value unused here */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem', marginTop: '1.5rem' }}>
-          {ZONE_NAMES.map((name, i) => (
+          {ZONE_NAMES.map((_, i) => (
             <div key={i} style={{
               height: 6, borderRadius: 3,
               background: i <= zoneIdx ? ZONE_COLORS[i] : 'rgba(255,255,255,0.08)',
@@ -193,6 +177,7 @@ const DeviceLive = () => {
             }} />
           ))}
         </div>
+        {/* Zone Labels — name used here */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem', marginTop: '0.3rem' }}>
           {ZONE_NAMES.map((name, i) => (
             <div key={i} style={{ fontSize: '0.55rem', color: i === zoneIdx ? ZONE_COLORS[i] : 'var(--color-text-muted)', textAlign: 'center' }}>{name}</div>
@@ -200,7 +185,6 @@ const DeviceLive = () => {
         </div>
       </div>
 
-      {/* Live Chart */}
       {chartData.length > 1 && (
         <div className="glass-card" style={{ padding: '1rem', marginBottom: '1.5rem' }}>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -216,17 +200,12 @@ const DeviceLive = () => {
               />
               <ReferenceLine y={130} stroke="rgba(251,191,36,0.3)" strokeDasharray="4 4" />
               <ReferenceLine y={160} stroke="rgba(248,113,113,0.3)" strokeDasharray="4 4" />
-              <Line
-                type="monotone" dataKey="hr"
-                stroke={zoneColor} strokeWidth={2} dot={false}
-                style={{ filter: `drop-shadow(0 0 4px ${zoneColor})` }}
-              />
+              <Line type="monotone" dataKey="hr" stroke={zoneColor} strokeWidth={2} dot={false} style={{ filter: `drop-shadow(0 0 4px ${zoneColor})` }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {/* Timer + Controls */}
       <div className="glass-card" style={{ padding: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>مدة الجلسة</div>
