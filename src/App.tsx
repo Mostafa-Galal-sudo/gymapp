@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 import { useLanguageStore } from './store/useLanguageStore';
 import { useUserStore } from './store/useUserStore';
 import MainLayout from './components/layout/MainLayout';
 import { MigrationGate } from './components/MigrationGate';
-import AmbientBackground from './components/AmbientBackground';
+
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Workout from './pages/Workout';
@@ -17,19 +17,23 @@ import MuscleMapPage from './pages/MuscleMapPage';
 
 function AppRouter() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    const backListener = CapacitorApp.addListener('backButton', ({ canGoBack }) => {
-      if (canGoBack) {
-        navigate(-1);
-      } else {
+    const backListener = CapacitorApp.addListener('backButton', () => {
+      // Allow back navigation to Dashboard, otherwise exit
+      if (location.pathname === '/dashboard' || location.pathname === '/' || location.pathname === '/auth') {
         CapacitorApp.exitApp();
+      } else {
+        // From any other tab, pressing back goes to dashboard
+        navigate('/dashboard', { replace: true });
       }
     });
+
     return () => {
       backListener.then(l => l.remove());
     };
-  }, [navigate]);
+  }, [location.pathname, navigate]);
 
   return (
     <Routes>
@@ -59,8 +63,7 @@ function App() {
   return (
     <MigrationGate>
       {!isAuthenticated ? (
-        <div style={{ position: 'relative', minHeight: '100vh' }}>
-          <AmbientBackground />
+        <div style={{ position: 'relative', minHeight: '100vh', background: 'var(--bg-base)' }}>
           <Auth />
         </div>
       ) : (
