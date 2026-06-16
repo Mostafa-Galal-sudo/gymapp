@@ -19,6 +19,15 @@ export interface UserEntity {
   profile: UserProfile;
   supplements: Supplement[];
   weightHistory: WeightEntry[];
+  gamification?: {
+    xp: number;
+    level: number;
+    badges: any[]; // we'll use any to avoid circular imports, or just import Badge from GamificationStore
+  };
+  exercisePrefs?: {
+    favorites: string[];
+    templates: any[];
+  };
 }
 
 export interface DailyLogEntity {

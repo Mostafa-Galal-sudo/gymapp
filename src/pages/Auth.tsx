@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useUserStore } from '../store/useUserStore';
 import { useWorkoutStore } from '../store/useWorkoutStore';
 import { useNutritionStore } from '../store/useNutritionStore';
+import { useGamificationStore } from '../store/useGamificationStore';
+import { useExerciseStore } from '../store/useExerciseStore';
 import db from '../db/db';
 import { User, Plus } from 'lucide-react';
 import { useT } from '../hooks/useT';
@@ -12,6 +14,8 @@ export const Auth = () => {
   const createUser = useUserStore((s) => s.createUser);
   const loadUserWorkouts = useWorkoutStore((s) => s.loadUserWorkouts);
   const loadUserHistory = useNutritionStore((s) => s.loadUserHistory);
+  const loadUserGamification = useGamificationStore((s) => s.loadUserGamification);
+  const loadUserExercises = useExerciseStore((s) => s.loadUserExercises);
 
   const [users, setUsers] = useState<any[]>([]);
   const [showNew, setShowNew] = useState(false);
@@ -29,6 +33,8 @@ export const Auth = () => {
     await loadUser(userId);
     await loadUserWorkouts(userId);
     await loadUserHistory(userId);
+    await loadUserGamification(userId);
+    await loadUserExercises(userId);
   };
 
   const handleCreateProfile = async (e: React.FormEvent) => {
@@ -38,6 +44,8 @@ export const Auth = () => {
     await createUser(newId, newName.trim());
     await loadUserWorkouts(newId);
     await loadUserHistory(newId);
+    await loadUserGamification(newId);
+    await loadUserExercises(newId);
   };
 
   return (
