@@ -2,6 +2,7 @@ import { Outlet, NavLink } from 'react-router-dom';
 import { LayoutDashboard, Dumbbell, Salad, User, Accessibility, CalendarDays } from 'lucide-react';
 import styles from './MainLayout.module.css';
 import { useT } from '../../hooks/useT';
+import AmbientBackground from '../AmbientBackground';
 
 const MainLayout = () => {
   const t = useT();
@@ -16,6 +17,7 @@ const MainLayout = () => {
 
   return (
     <div className={styles.layout}>
+      <AmbientBackground />
       <main className={styles.main}>
         <Outlet />
       </main>

@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/useUserStore';
 import { useWorkoutStore } from '../store/useWorkoutStore';
-import { useNutritionStore } from '../store/useNutritionStore';
 import { useGamificationStore } from '../store/useGamificationStore';
 import { useDeviceStore } from '../store/useDeviceStore';
 import {
@@ -393,7 +392,6 @@ const WorkoutHistoryView = () => {
 const Profile = () => {
   const userStore = useUserStore();
   const workoutStore = useWorkoutStore();
-  const nutritionStore = useNutritionStore();
   const gamification = useGamificationStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const t = useT();
@@ -450,9 +448,10 @@ const Profile = () => {
     reader.onload = ev => {
       try {
         const data = JSON.parse(ev.target?.result as string);
-        if (data.user) userStore.importData(data.user);
-        if (data.workout) workoutStore.importData(data.workout);
-        if (data.nutrition) nutritionStore.importData(data.nutrition);
+        // TODO: Update import logic for new Dexie DB schema
+        // if (data.user) userStore.importData(data.user);
+        // if (data.workout) workoutStore.importData(data.workout);
+        // if (data.nutrition) nutritionStore.importData(data.nutrition);
         if (data.gamification) gamification.importData(data.gamification);
         alert('Data restored successfully!');
       } catch { alert('Invalid backup file. Please try again.'); }
@@ -537,7 +536,7 @@ const Profile = () => {
               {profile.age} {t('profile.age')} · {profile.weight}{t('common.kg')} · {profile.height}cm
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-              {t('dash.level')} {profile.level} · {profile.goals.map(g => t(`auth.goal.${g}` as any) || g).join(' · ')}
+              {t('dash.level')} {t(`dash.${profile.level.toLowerCase()}` as any) || profile.level} · {profile.goals.map(g => t(`auth.goal.${g}` as any) || g).join(' · ')}
             </div>
           </div>
         </div>

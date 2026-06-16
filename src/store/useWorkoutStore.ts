@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import db from '../db/db';
+import { useUserStore } from './useUserStore';
 import { useGamificationStore } from './useGamificationStore';
 
 export interface WorkoutSet {
@@ -40,6 +41,7 @@ interface WorkoutState {
   scheduledSessions: ScheduledSession[];
   suggestDeload: boolean;
   volumeSpikeWarning: boolean;
+  loadUserWorkouts: (userId: string) => Promise<void>;
   startSession: (type: string, exerciseIds: string[]) => void;
   updateSet: (exerciseId: string, setNumber: number, data: Partial<WorkoutSet>) => void;
   updateNotes: (exerciseId: string, notes: string) => void;
@@ -48,9 +50,8 @@ interface WorkoutState {
   addExerciseToSession: (exerciseId: string) => void;
   removeExerciseFromSession: (exerciseId: string) => void;
   setPhase: (phase: 'warmup' | 'main' | 'cooldown') => void;
-  finishSession: () => void;
+  finishSession: () => Promise<void>;
   getSuggestedWeight: (exerciseId: string) => number;
-  importData: (data: any) => void;
   scheduleSession: (date: string, type: string, exerciseIds: string[]) => void;
   removeScheduledSession: (id: string) => void;
   updateScheduledSessionDate: (id: string, newDate: string) => void;
@@ -58,201 +59,199 @@ interface WorkoutState {
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
-export const useWorkoutStore = create<WorkoutState>()(
-  persist(
-    (set, get) => ({
-      history: [],
-      activeSession: null,
-      scheduledSessions: [],
-      suggestDeload: false,
-      volumeSpikeWarning: false,
+export const useWorkoutStore = create<WorkoutState>()((set, get) => ({
+  history: [],
+  activeSession: null,
+  scheduledSessions: [],
+  suggestDeload: false,
+  volumeSpikeWarning: false,
 
-      scheduleSession: (date, type, exerciseIds) => set((state) => ({
-        scheduledSessions: [...state.scheduledSessions, { id: generateId(), date, type, exerciseIds }]
-      })),
+  loadUserWorkouts: async (userId: string) => {
+    const workouts = await db.workouts.where('userId').equals(userId).toArray();
+    set({ history: workouts });
+  },
 
-      removeScheduledSession: (id) => set((state) => ({
-        scheduledSessions: state.scheduledSessions.filter(s => s.id !== id)
-      })),
+  scheduleSession: (date, type, exerciseIds) => set((state) => ({
+    scheduledSessions: [...state.scheduledSessions, { id: generateId(), date, type, exerciseIds }]
+  })),
 
-      updateScheduledSessionDate: (id, newDate) => set((state) => ({
-        scheduledSessions: state.scheduledSessions.map(s => s.id === id ? { ...s, date: newDate } : s)
-      })),
+  removeScheduledSession: (id) => set((state) => ({
+    scheduledSessions: state.scheduledSessions.filter(s => s.id !== id)
+  })),
 
-      startSession: (type, exerciseIds) => {
-        const exercises: WorkoutExercise[] = exerciseIds.map(id => {
-          // Find suggested weight from history
-          const suggestedWeight = get().getSuggestedWeight(id);
-          return {
-            exerciseId: id,
-            notes: '',
-            voiceNotes: [],
-            sets: [
-              { setNumber: 1, weight: suggestedWeight, reps: 0, rpe: 0, completed: false },
-              { setNumber: 2, weight: suggestedWeight, reps: 0, rpe: 0, completed: false },
-              { setNumber: 3, weight: suggestedWeight, reps: 0, rpe: 0, completed: false }
-            ]
-          };
-        });
+  updateScheduledSessionDate: (id, newDate) => set((state) => ({
+    scheduledSessions: state.scheduledSessions.map(s => s.id === id ? { ...s, date: newDate } : s)
+  })),
 
-        set({
-          activeSession: {
-            sessionId: generateId(),
-            date: Date.now(),
-            type,
-            exercises,
-            totalVolume: 0,
-            phase: 'warmup',
-            isFinished: false,
-          }
-        });
-      },
+  startSession: (type, exerciseIds) => {
+    const exercises: WorkoutExercise[] = exerciseIds.map(id => {
+      // Find suggested weight from history
+      const suggestedWeight = get().getSuggestedWeight(id);
+      return {
+        exerciseId: id,
+        notes: '',
+        voiceNotes: [],
+        sets: [
+          { setNumber: 1, weight: suggestedWeight, reps: 0, rpe: 0, completed: false },
+          { setNumber: 2, weight: suggestedWeight, reps: 0, rpe: 0, completed: false },
+          { setNumber: 3, weight: suggestedWeight, reps: 0, rpe: 0, completed: false }
+        ]
+      };
+    });
 
-      updateSet: (exerciseId, setNumber, data) => set((state) => {
-        if (!state.activeSession) return state;
-        const exercises = state.activeSession.exercises.map(ex => {
-          if (ex.exerciseId !== exerciseId) return ex;
-          const sets = ex.sets.map(s => {
-            if (s.setNumber !== setNumber) return s;
-            return { ...s, ...data };
-          });
-          return { ...ex, sets };
-        });
-        return { activeSession: { ...state.activeSession, exercises } };
-      }),
+    set({
+      activeSession: {
+        sessionId: generateId(),
+        date: Date.now(),
+        type,
+        exercises,
+        totalVolume: 0,
+        phase: 'warmup',
+        isFinished: false,
+      }
+    });
+  },
 
-      updateNotes: (exerciseId, notes) => set((state) => {
-        if (!state.activeSession) return state;
-        const exercises = state.activeSession.exercises.map(ex => {
-          if (ex.exerciseId !== exerciseId) return ex;
-          return { ...ex, notes };
-        });
-        return { activeSession: { ...state.activeSession, exercises } };
-      }),
+  updateSet: (exerciseId, setNumber, data) => set((state) => {
+    if (!state.activeSession) return state;
+    const exercises = state.activeSession.exercises.map(ex => {
+      if (ex.exerciseId !== exerciseId) return ex;
+      const sets = ex.sets.map(s => {
+        if (s.setNumber !== setNumber) return s;
+        return { ...s, ...data };
+      });
+      return { ...ex, sets };
+    });
+    return { activeSession: { ...state.activeSession, exercises } };
+  }),
 
-      addVoiceNote: (exerciseId, voiceNote) => set((state) => {
-        if (!state.activeSession) return state;
-        const exercises = state.activeSession.exercises.map(ex => {
-          if (ex.exerciseId !== exerciseId) return ex;
-          return { ...ex, voiceNotes: [...ex.voiceNotes, voiceNote] };
-        });
-        return { activeSession: { ...state.activeSession, exercises } };
-      }),
+  updateNotes: (exerciseId, notes) => set((state) => {
+    if (!state.activeSession) return state;
+    const exercises = state.activeSession.exercises.map(ex => {
+      if (ex.exerciseId !== exerciseId) return ex;
+      return { ...ex, notes };
+    });
+    return { activeSession: { ...state.activeSession, exercises } };
+  }),
 
-      swapExercise: (oldId, newId) => set((state) => {
-        if (!state.activeSession) return state;
-        const exercises = state.activeSession.exercises.map(ex => {
-          if (ex.exerciseId !== oldId) return ex;
-          return { ...ex, exerciseId: newId }; // keep sets and notes, just swap ID
-        });
-        return { activeSession: { ...state.activeSession, exercises } };
-      }),
+  addVoiceNote: (exerciseId, voiceNote) => set((state) => {
+    if (!state.activeSession) return state;
+    const exercises = state.activeSession.exercises.map(ex => {
+      if (ex.exerciseId !== exerciseId) return ex;
+      return { ...ex, voiceNotes: [...ex.voiceNotes, voiceNote] };
+    });
+    return { activeSession: { ...state.activeSession, exercises } };
+  }),
 
-      addExerciseToSession: (exerciseId) => set((state) => {
-        if (!state.activeSession) return state;
-        const suggestedWeight = get().getSuggestedWeight(exerciseId);
-        const newExercise = {
-          exerciseId,
-          notes: '',
-          voiceNotes: [],
-          sets: [
-            { setNumber: 1, weight: suggestedWeight, reps: 0, rpe: 0, completed: false },
-            { setNumber: 2, weight: suggestedWeight, reps: 0, rpe: 0, completed: false },
-            { setNumber: 3, weight: suggestedWeight, reps: 0, rpe: 0, completed: false }
-          ]
-        };
-        return { activeSession: { ...state.activeSession, exercises: [...state.activeSession.exercises, newExercise] } };
-      }),
+  swapExercise: (oldId, newId) => set((state) => {
+    if (!state.activeSession) return state;
+    const exercises = state.activeSession.exercises.map(ex => {
+      if (ex.exerciseId !== oldId) return ex;
+      return { ...ex, exerciseId: newId }; // keep sets and notes, just swap ID
+    });
+    return { activeSession: { ...state.activeSession, exercises } };
+  }),
 
-      removeExerciseFromSession: (exerciseId) => set((state) => {
-        if (!state.activeSession) return state;
-        const exercises = state.activeSession.exercises.filter(ex => ex.exerciseId !== exerciseId);
-        return { activeSession: { ...state.activeSession, exercises } };
-      }),
+  addExerciseToSession: (exerciseId) => set((state) => {
+    if (!state.activeSession) return state;
+    const suggestedWeight = get().getSuggestedWeight(exerciseId);
+    const newExercise = {
+      exerciseId,
+      notes: '',
+      voiceNotes: [],
+      sets: [
+        { setNumber: 1, weight: suggestedWeight, reps: 0, rpe: 0, completed: false },
+        { setNumber: 2, weight: suggestedWeight, reps: 0, rpe: 0, completed: false },
+        { setNumber: 3, weight: suggestedWeight, reps: 0, rpe: 0, completed: false }
+      ]
+    };
+    return { activeSession: { ...state.activeSession, exercises: [...state.activeSession.exercises, newExercise] } };
+  }),
 
-      setPhase: (phase) => set((state) => {
-        if (!state.activeSession) return state;
-        return { activeSession: { ...state.activeSession, phase } };
-      }),
+  removeExerciseFromSession: (exerciseId) => set((state) => {
+    if (!state.activeSession) return state;
+    const exercises = state.activeSession.exercises.filter(ex => ex.exerciseId !== exerciseId);
+    return { activeSession: { ...state.activeSession, exercises } };
+  }),
 
-      finishSession: () => set((state) => {
-        if (!state.activeSession) return state;
-        
-        let totalVolume = 0;
-        let setsCompleted = 0;
-        state.activeSession.exercises.forEach(ex => {
-          ex.sets.forEach(s => {
-            if (s.completed && s.weight > 0 && s.reps > 0) {
-              totalVolume += (s.weight * s.reps);
-              setsCompleted += 1;
-            }
-          });
-        });
+  setPhase: (phase) => set((state) => {
+    if (!state.activeSession) return state;
+    return { activeSession: { ...state.activeSession, phase } };
+  }),
 
-        // Gamification integration (static import)
-        const gamification = useGamificationStore.getState();
-        gamification.addXP(totalVolume * 0.1 + setsCompleted * 10);
-        gamification.unlockBadge('first_workout');
-        const currentHour = new Date().getHours();
-        if (currentHour < 8) gamification.unlockBadge('early_bird');
-        if (currentHour >= 20) gamification.unlockBadge('night_owl');
-
-        const finishedSession = { 
-          ...state.activeSession, 
-          isFinished: true, 
-          totalVolume 
-        };
-
-        const newHistory = [...state.history, finishedSession];
-
-        // Volume Spike Warning
-        let volumeSpikeWarning = false;
-        if (newHistory.length >= 2) {
-          const lastSession = newHistory[newHistory.length - 1];
-          const prevSession = newHistory[newHistory.length - 2];
-          if (lastSession.totalVolume > prevSession.totalVolume * 1.2) {
-            volumeSpikeWarning = true;
-          }
+  finishSession: async () => {
+    const state = get();
+    if (!state.activeSession) return;
+    
+    let totalVolume = 0;
+    let setsCompleted = 0;
+    state.activeSession.exercises.forEach(ex => {
+      ex.sets.forEach(s => {
+        if (s.completed && s.weight > 0 && s.reps > 0) {
+          totalVolume += (s.weight * s.reps);
+          setsCompleted += 1;
         }
+      });
+    });
 
-        return {
-          history: newHistory,
-          activeSession: null,
-          suggestDeload: false,
-          volumeSpikeWarning
-        };
-      }),
+    // Gamification integration
+    const gamification = useGamificationStore.getState();
+    gamification.addXP(totalVolume * 0.1 + setsCompleted * 10);
+    gamification.unlockBadge('first_workout');
+    const currentHour = new Date().getHours();
+    if (currentHour < 8) gamification.unlockBadge('early_bird');
+    if (currentHour >= 20) gamification.unlockBadge('night_owl');
 
-      getSuggestedWeight: (exerciseId) => {
-        const history = get().history;
-        // Find last session that had this exercise
-        for (let i = history.length - 1; i >= 0; i--) {
-          const ex = history[i].exercises.find(e => e.exerciseId === exerciseId);
-          if (ex) {
-            // Check if all sets were completed with RPE < 9 and high reps
-            const completedSets = ex.sets.filter(s => s.completed);
-            if (completedSets.length > 0) {
-              const maxWeight = Math.max(...completedSets.map(s => s.weight));
-              const allHighReps = completedSets.every(s => s.reps >= 10);
-              // Simple double progression logic: if hit 10+ reps on all sets, suggest +2.5kg
-              if (allHighReps) {
-                return maxWeight + 2.5;
-              }
-              return maxWeight; // Keep same weight
-            }
-          }
-        }
-        return 0; // Default if no history
-      },
-      
-      importData: (data) => set({ 
-        history: data.history || [], 
-        activeSession: data.activeSession || null,
-        scheduledSessions: data.scheduledSessions || []
-      })
-    }),
-    {
-      name: 'omnibody-workout-storage',
+    const finishedSession = { 
+      ...state.activeSession, 
+      isFinished: true, 
+      totalVolume 
+    };
+
+    const newHistory = [...state.history, finishedSession];
+
+    // Volume Spike Warning
+    let volumeSpikeWarning = false;
+    if (newHistory.length >= 2) {
+      const lastSession = newHistory[newHistory.length - 1];
+      const prevSession = newHistory[newHistory.length - 2];
+      if (lastSession.totalVolume > prevSession.totalVolume * 1.2) {
+        volumeSpikeWarning = true;
+      }
     }
-  )
-);
+
+    set({
+      history: newHistory,
+      activeSession: null,
+      suggestDeload: false,
+      volumeSpikeWarning
+    });
+
+    const activeUserId = useUserStore.getState().activeUserId;
+    if (activeUserId) {
+      await db.workouts.put({ ...finishedSession, userId: activeUserId });
+    }
+  },
+
+  getSuggestedWeight: (exerciseId) => {
+    const history = get().history;
+    // Find last session that had this exercise
+    for (let i = history.length - 1; i >= 0; i--) {
+      const ex = history[i].exercises.find(e => e.exerciseId === exerciseId);
+      if (ex) {
+        // Check if all sets were completed with RPE < 9 and high reps
+        const completedSets = ex.sets.filter(s => s.completed);
+        if (completedSets.length > 0) {
+          const maxWeight = Math.max(...completedSets.map(s => s.weight));
+          const allHighReps = completedSets.every(s => s.reps >= 10);
+          // Simple double progression logic
+          if (allHighReps) {
+            return maxWeight + 2.5;
+          }
+          return maxWeight; // Keep same weight
+        }
+      }
+    }
+    return 0; // Default if no history
+  }
+}));

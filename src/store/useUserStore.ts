@@ -1,12 +1,12 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import db from '../db/db';
 
 export interface Supplement {
   id: string;
   name: string;
   dose: string;
   timing: string;
-  taken: boolean[]; // Array of booleans for multiple doses
+  taken: boolean[]; // Array of booleans for multiple doses (used to define how many doses are needed)
 }
 
 export interface UserProfile {
@@ -16,7 +16,7 @@ export interface UserProfile {
   height: number;
   level: string;
   goals: string[];
-  profilePhoto?: string; // base64 data URL
+  profilePhoto?: string;
 }
 
 export interface WeightEntry {
@@ -25,17 +25,16 @@ export interface WeightEntry {
 }
 
 interface UserState {
+  activeUserId: string | null;
   profile: UserProfile;
   supplements: Supplement[];
   weightHistory: WeightEntry[];
   isAuthenticated: boolean;
-  login: () => void;
+  loadUser: (userId: string) => Promise<void>;
+  createUser: (userId: string, name: string) => Promise<void>;
   logout: () => void;
-  updateProfile: (updates: Partial<UserProfile>) => void;
-  toggleSupplement: (id: string, doseIndex: number) => void;
-  resetSupplements: () => void;
-  logWeight: (weight: number) => void;
-  importData: (data: any) => void;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  logWeight: (weight: number) => Promise<void>;
 }
 
 const DEFAULT_SUPPLEMENTS: Supplement[] = [
@@ -56,41 +55,76 @@ const DEFAULT_PROFILE: UserProfile = {
   goals: ['Strength', 'Athletic', 'Aesthetics'],
 };
 
-export const useUserStore = create<UserState>()(
-  persist(
-    (set) => ({
+const saveToDb = async (state: UserState) => {
+  if (!state.activeUserId) return;
+  await db.users.put({
+    id: state.activeUserId,
+    profile: state.profile,
+    supplements: state.supplements,
+    weightHistory: state.weightHistory
+  });
+};
+
+export const useUserStore = create<UserState>()((set, get) => ({
+  activeUserId: null,
+  profile: DEFAULT_PROFILE,
+  supplements: DEFAULT_SUPPLEMENTS,
+  weightHistory: [],
+  isAuthenticated: false,
+
+  loadUser: async (userId: string) => {
+    const user = await db.users.get(userId);
+    if (user) {
+      set({
+        activeUserId: userId,
+        profile: user.profile,
+        supplements: user.supplements,
+        weightHistory: user.weightHistory,
+        isAuthenticated: true
+      });
+    }
+  },
+
+  createUser: async (userId: string, name: string) => {
+    const profile = { ...DEFAULT_PROFILE, name };
+    const weightHistory = [{ date: Date.now(), weight: profile.weight }];
+    await db.users.put({
+      id: userId,
+      profile,
+      supplements: DEFAULT_SUPPLEMENTS,
+      weightHistory
+    });
+    set({
+      activeUserId: userId,
+      profile,
+      supplements: DEFAULT_SUPPLEMENTS,
+      weightHistory,
+      isAuthenticated: true
+    });
+  },
+
+  logout: () => {
+    set({
+      activeUserId: null,
+      isAuthenticated: false,
       profile: DEFAULT_PROFILE,
       supplements: DEFAULT_SUPPLEMENTS,
-      weightHistory: [{ date: Date.now() - 7 * 86400000, weight: 77.5 }, { date: Date.now(), weight: 78 }],
-      isAuthenticated: true,
-      login: () => set({ isAuthenticated: true }),
-      logout: () => set({ isAuthenticated: false, profile: DEFAULT_PROFILE, supplements: DEFAULT_SUPPLEMENTS, weightHistory: [] }),
-      updateProfile: (updates) => set((state) => ({ profile: { ...state.profile, ...updates } })),
-      toggleSupplement: (id, doseIndex) => set((state) => ({
-        supplements: state.supplements.map((sup) => {
-          if (sup.id === id) {
-            const newTaken = [...sup.taken];
-            newTaken[doseIndex] = !newTaken[doseIndex];
-            return { ...sup, taken: newTaken };
-          }
-          return sup;
-        })
-      })),
-      resetSupplements: () => set((state) => ({
-        supplements: state.supplements.map(sup => ({ ...sup, taken: sup.taken.map(() => false) }))
-      })),
-      logWeight: (weight) => set((state) => ({
-        profile: { ...state.profile, weight },
-        weightHistory: [...state.weightHistory, { date: Date.now(), weight }]
-      })),
-      importData: (data) => set({ 
-        profile: data.profile || DEFAULT_PROFILE, 
-        supplements: data.supplements || DEFAULT_SUPPLEMENTS,
-        weightHistory: data.weightHistory || []
-      })
-    }),
-    {
-      name: 'omnibody-user-storage',
-    }
-  )
-);
+      weightHistory: []
+    });
+  },
+
+  updateProfile: async (updates) => {
+    const state = get();
+    const newProfile = { ...state.profile, ...updates };
+    set({ profile: newProfile });
+    await saveToDb({ ...state, profile: newProfile });
+  },
+
+  logWeight: async (weight) => {
+    const state = get();
+    const newProfile = { ...state.profile, weight };
+    const newHistory = [...state.weightHistory, { date: Date.now(), weight }];
+    set({ profile: newProfile, weightHistory: newHistory });
+    await saveToDb({ ...state, profile: newProfile, weightHistory: newHistory });
+  }
+}));

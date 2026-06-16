@@ -544,8 +544,8 @@ select option { background: #0d1b2a; }
 
 /* Number input hide spinners */
 input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-input[type=number] { -moz-appearance: textfield; }
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0;appearance: none; }
+input[type=number] { -moz-appearance: textfield; appearance: none;}
 
 /* Range slider custom */
 input[type=range] {

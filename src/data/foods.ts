@@ -1,13 +1,27 @@
 export interface Food {
   id: string;
   name: string;
+  nameAr?: string;
   category: 'Local' | 'International' | 'Raw' | 'Supplement';
   calories: number;
   protein: number;
   carbs: number;
   fats: number;
   servingSize: number;
-  servingUnit: string; // e.g., 'g', 'cup', 'piece', 'ml', 'sandwich'
+  servingUnit: string;
+  // Macronutrients
+  fiber?: number;
+  sugar?: number;
+  // Minerals
+  sodium?: number;
+  potassium?: number;
+  iron?: number;
+  calcium?: number;
+  // Vitamins
+  vitaminA?: number;  // mcg
+  vitaminC?: number;  // mg
+  vitaminD?: number;  // IU
+  vitaminB12?: number; // mcg
 }
 
 export const STATIC_FOOD_DATABASE: Food[] = [
@@ -17,58 +31,54 @@ export const STATIC_FOOD_DATABASE: Food[] = [
   {
     id: 'koshari_standard',
     name: 'Standard Egyptian Koshari',
+    nameAr: 'كشري مصري قياسي',
     category: 'Local',
-    calories: 450,
-    protein: 14,
-    carbs: 75,
-    fats: 10,
-    servingSize: 300,
-    servingUnit: 'g'
+    calories: 450, protein: 14, carbs: 75, fats: 10,
+    servingSize: 300, servingUnit: 'g',
+    fiber: 9, sugar: 6, sodium: 580, potassium: 420, iron: 3.2, calcium: 60,
+    vitaminC: 4,
   },
   {
     id: 'koshari_large',
     name: 'Large Egyptian Koshari Bowl',
+    nameAr: 'كشري مصري كبير',
     category: 'Local',
-    calories: 680,
-    protein: 21,
-    carbs: 115,
-    fats: 14,
-    servingSize: 450,
-    servingUnit: 'g'
+    calories: 680, protein: 21, carbs: 115, fats: 14,
+    servingSize: 450, servingUnit: 'g',
+    fiber: 13, sugar: 9, sodium: 870, potassium: 630, iron: 4.8, calcium: 90,
+    vitaminC: 6,
   },
   {
     id: 'ful_medames_plain',
     name: 'Ful Medames (Plain, Boiled)',
+    nameAr: 'فول مدمس سادة',
     category: 'Local',
-    calories: 166,
-    protein: 11,
-    carbs: 28,
-    fats: 1,
-    servingSize: 150,
-    servingUnit: 'g'
+    calories: 166, protein: 11, carbs: 28, fats: 1,
+    servingSize: 150, servingUnit: 'g',
+    fiber: 8, sugar: 2, sodium: 7, potassium: 480, iron: 2.6, calcium: 45,
+    vitaminC: 1,
   },
   {
     id: 'ful_with_oil',
     name: 'Ful Medames with Olive Oil',
+    nameAr: 'فول مدمس بزيت الزيتون',
     category: 'Local',
-    calories: 270,
-    protein: 11,
-    carbs: 28,
-    fats: 12,
-    servingSize: 160,
-    servingUnit: 'g'
+    calories: 270, protein: 11, carbs: 28, fats: 12,
+    servingSize: 160, servingUnit: 'g',
+    fiber: 8, sugar: 2, sodium: 7, potassium: 490, iron: 2.7, calcium: 48,
+    vitaminC: 2, vitaminA: 12,
   },
   {
     id: 'ful_with_tahini',
     name: 'Ful Medames with Tahini',
+    nameAr: 'فول مدمس بطحينة',
     category: 'Local',
-    calories: 310,
-    protein: 13,
-    carbs: 30,
-    fats: 16,
-    servingSize: 180,
-    servingUnit: 'g'
+    calories: 310, protein: 13, carbs: 30, fats: 16,
+    servingSize: 180, servingUnit: 'g',
+    fiber: 9, sugar: 3, sodium: 90, potassium: 510, iron: 3.2, calcium: 120,
+    vitaminC: 2,
   },
+
   {
     id: 'ful_alexandrian',
     name: 'Alexandrian Ful Medames (with Veggies)',
@@ -78,7 +88,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 32,
     fats: 5,
     servingSize: 200,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 9, sugar: 3, sodium: 320, potassium: 560, iron: 3.1, calcium: 55, vitaminA: 15, vitaminC: 18,
   },
   {
     id: 'taameya_single',
@@ -89,7 +100,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 7,
     fats: 5,
     servingSize: 1,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 2, sugar: 0.5, sodium: 120, potassium: 110, iron: 1.2, calcium: 25, vitaminC: 1,
   },
   {
     id: 'taameya_stuffed',
@@ -100,7 +112,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 10,
     fats: 8,
     servingSize: 1,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 2.5, sugar: 1, sodium: 210, potassium: 150, iron: 1.5, calcium: 30, vitaminA: 10, vitaminC: 4,
   },
   {
     id: 'falafel_syrian',
@@ -111,7 +124,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 6,
     fats: 3.5,
     servingSize: 1,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 1.5, sugar: 0.3, sodium: 90, potassium: 85, iron: 0.8, calcium: 15,
   },
   {
     id: 'mahshi_kromb',
@@ -122,7 +136,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 52,
     fats: 12,
     servingSize: 250,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 5.5, sugar: 4.5, sodium: 480, potassium: 450, iron: 2.2, calcium: 85, vitaminA: 35, vitaminC: 45,
   },
   {
     id: 'mahshi_waraq_enab',
@@ -133,7 +148,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 58,
     fats: 14,
     servingSize: 250,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 6.5, sugar: 3.5, sodium: 520, potassium: 380, iron: 3.5, calcium: 110, vitaminA: 120, vitaminC: 15,
   },
   {
     id: 'mahshi_kousa',
@@ -144,7 +160,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 38,
     fats: 10,
     servingSize: 250,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 4, sugar: 5, sodium: 450, potassium: 550, iron: 2.1, calcium: 65, vitaminA: 25, vitaminC: 22,
   },
   {
     id: 'mahshi_filfil',
@@ -155,7 +172,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 35,
     fats: 9,
     servingSize: 250,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 4.5, sugar: 6.5, sodium: 420, potassium: 480, iron: 1.8, calcium: 45, vitaminA: 150, vitaminC: 110,
   },
   {
     id: 'mahshi_batingan',
@@ -166,7 +184,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 48,
     fats: 10,
     servingSize: 250,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 7, sugar: 6, sodium: 460, potassium: 520, iron: 1.9, calcium: 55, vitaminA: 20, vitaminC: 12,
   },
   {
     id: 'molokhia_chicken_soup',
@@ -177,7 +196,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 9,
     fats: 5,
     servingSize: 250,
-    servingUnit: 'ml'
+    servingUnit: 'ml',
+    fiber: 3.5, sugar: 1, sodium: 650, potassium: 380, iron: 2.8, calcium: 120, vitaminA: 250, vitaminC: 18,
   },
   {
     id: 'molokhia_plain',
@@ -188,7 +208,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 7,
     fats: 0.5,
     servingSize: 250,
-    servingUnit: 'ml'
+    servingUnit: 'ml',
+    fiber: 3, sugar: 0.5, sodium: 350, potassium: 290, iron: 2.2, calcium: 100, vitaminA: 220, vitaminC: 15,
   },
   {
     id: 'fatta_beef',
@@ -199,7 +220,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 75,
     fats: 28,
     servingSize: 450,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 4, sugar: 3, sodium: 850, potassium: 680, iron: 4.5, calcium: 75, vitaminA: 45, vitaminC: 10, vitaminB12: 3.2,
   },
   {
     id: 'hawawshi_baladi',
@@ -210,7 +232,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 48,
     fats: 32,
     servingSize: 1,
-    servingUnit: 'sandwich'
+    servingUnit: 'sandwich',
+    fiber: 5.5, sugar: 3.5, sodium: 920, potassium: 450, iron: 4.2, calcium: 65, vitaminA: 35, vitaminC: 8, vitaminB12: 2.4,
   },
   {
     id: 'hawawshi_alexandrian',
@@ -221,7 +244,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 65,
     fats: 40,
     servingSize: 1,
-    servingUnit: 'sandwich'
+    servingUnit: 'sandwich',
+    fiber: 4, sugar: 4.5, sodium: 1100, potassium: 520, iron: 4.8, calcium: 85, vitaminA: 40, vitaminC: 10, vitaminB12: 2.8,
   },
   {
     id: 'kebda_alexandrian',
@@ -232,7 +256,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 6,
     fats: 20,
     servingSize: 150,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 1, sugar: 1.5, sodium: 580, potassium: 420, iron: 6.5, calcium: 25, vitaminA: 7500, vitaminC: 22, vitaminB12: 85,
   },
   {
     id: 'kebda_chicken',
@@ -243,7 +268,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 8,
     fats: 14,
     servingSize: 150,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 1.5, sugar: 3, sodium: 450, potassium: 380, iron: 12, calcium: 20, vitaminA: 5500, vitaminC: 25, vitaminB12: 25,
   },
   {
     id: 'shawarma_chicken_syrian',
@@ -254,7 +280,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 44,
     fats: 24,
     servingSize: 1,
-    servingUnit: 'sandwich'
+    servingUnit: 'sandwich',
+    fiber: 3, sugar: 4, sodium: 1250, potassium: 480, iron: 2.8, calcium: 85, vitaminA: 30, vitaminC: 12,
   },
   {
     id: 'shawarma_beef_syrian',
@@ -265,7 +292,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 42,
     fats: 30,
     servingSize: 1,
-    servingUnit: 'sandwich'
+    servingUnit: 'sandwich',
+    fiber: 3.5, sugar: 4.5, sodium: 1150, potassium: 510, iron: 4.5, calcium: 75, vitaminA: 25, vitaminC: 15, vitaminB12: 2.2,
   },
   {
     id: 'kofta_grills',
@@ -276,7 +304,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 2,
     fats: 30,
     servingSize: 150,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0.5, sugar: 0.5, sodium: 750, potassium: 390, iron: 3.2, calcium: 35, vitaminB12: 2.1,
   },
   {
     id: 'tarb_grills',
@@ -287,7 +316,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 2,
     fats: 50,
     servingSize: 150,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0.5, sugar: 0.5, sodium: 820, potassium: 340, iron: 2.8, calcium: 30, vitaminB12: 1.8,
   },
   {
     id: 'baladi_bread_whole',
@@ -298,7 +328,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 52,
     fats: 1.5,
     servingSize: 1,
-    servingUnit: 'loaf'
+    servingUnit: 'loaf',
+    fiber: 5.8, sugar: 2, sodium: 320, potassium: 180, iron: 3.1, calcium: 45,
   },
   {
     id: 'hummus_dip',
@@ -309,7 +340,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 15,
     fats: 10,
     servingSize: 100,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 4.5, sugar: 0.5, sodium: 280, potassium: 210, iron: 1.8, calcium: 42,
   },
   {
     id: 'baba_ganoush_dip',
@@ -320,7 +352,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 10,
     fats: 8,
     servingSize: 100,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 3.5, sugar: 3, sodium: 310, potassium: 230, iron: 0.7, calcium: 25, vitaminC: 4,
   },
   {
     id: 'tabbouleh_salad',
@@ -331,7 +364,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 11,
     fats: 11,
     servingSize: 150,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 3.2, sugar: 2.1, sodium: 250, potassium: 320, iron: 1.5, calcium: 40, vitaminA: 180, vitaminC: 35,
   },
   {
     id: 'fattoush_salad',
@@ -342,7 +376,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 22,
     fats: 9,
     servingSize: 200,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 2.5, sugar: 3.5, sodium: 380, potassium: 350, iron: 1.2, calcium: 55, vitaminA: 150, vitaminC: 28,
   },
   {
     id: 'dates_medjool',
@@ -353,7 +388,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 75,
     fats: 0.2,
     servingSize: 100,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 6.7, sugar: 66.5, sodium: 1, potassium: 696, iron: 0.9, calcium: 64, vitaminA: 7,
   },
   {
     id: 'hamam_mahshi_rice',
@@ -364,7 +400,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 45,
     fats: 28,
     servingSize: 1,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 2.5, sugar: 1.5, sodium: 620, potassium: 450, iron: 6.2, calcium: 55, vitaminB12: 1.5,
   },
   {
     id: 'hamam_mahshi_freekeh',
@@ -375,7 +412,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 38,
     fats: 22,
     servingSize: 1,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 6.5, sugar: 2, sodium: 580, potassium: 510, iron: 7.1, calcium: 65, vitaminB12: 1.6,
   },
   {
     id: 'mumbar_stuffed',
@@ -386,7 +424,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 55,
     fats: 18,
     servingSize: 200,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 3.5, sugar: 2.5, sodium: 750, potassium: 280, iron: 3.8, calcium: 45,
   },
   {
     id: 'mesakaa_plain',
@@ -397,7 +436,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 22,
     fats: 16,
     servingSize: 200,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 5.5, sugar: 6, sodium: 480, potassium: 520, iron: 1.8, calcium: 45, vitaminA: 25, vitaminC: 15,
   },
   {
     id: 'mesakaa_with_meat',
@@ -408,7 +448,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 24,
     fats: 24,
     servingSize: 250,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 5.5, sugar: 6, sodium: 650, potassium: 650, iron: 3.5, calcium: 60, vitaminA: 30, vitaminC: 15, vitaminB12: 1.5,
   },
   {
     id: 'besarah_egyptian',
@@ -419,7 +460,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 28,
     fats: 4,
     servingSize: 200,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 6.5, sugar: 2, sodium: 380, potassium: 410, iron: 3.2, calcium: 55, vitaminA: 40, vitaminC: 8,
   },
   {
     id: 'kushari_yellow',
@@ -430,7 +472,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 72,
     fats: 3,
     servingSize: 250,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 7.5, sugar: 3.5, sodium: 520, potassium: 480, iron: 3.8, calcium: 65,
   },
   {
     id: 'roz_maamar_plain',
@@ -441,7 +484,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 65,
     fats: 20,
     servingSize: 250,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 1.5, sugar: 4.5, sodium: 380, potassium: 250, iron: 0.8, calcium: 180, vitaminA: 80, vitaminD: 1.2,
   },
   {
     id: 'roz_maamar_beef',
@@ -452,7 +496,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 65,
     fats: 32,
     servingSize: 300,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 1.5, sugar: 4.5, sodium: 650, potassium: 450, iron: 3.2, calcium: 210, vitaminA: 95, vitaminD: 1.2, vitaminB12: 2.1,
   },
   {
     id: 'macaroni_bechamel',
@@ -463,7 +508,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 58,
     fats: 24,
     servingSize: 300,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 3.5, sugar: 6.5, sodium: 850, potassium: 420, iron: 2.8, calcium: 250, vitaminA: 110, vitaminC: 2, vitaminB12: 1.8,
   },
   {
     id: 'goulash_meat',
@@ -474,7 +520,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 38,
     fats: 22,
     servingSize: 200,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 2.5, sugar: 2, sodium: 580, potassium: 280, iron: 2.5, calcium: 45, vitaminB12: 1.2,
   },
   {
     id: 'feteer_meshaltet_plain',
@@ -485,7 +532,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 72,
     fats: 34,
     servingSize: 150,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 2, sugar: 2.5, sodium: 450, potassium: 120, iron: 1.8, calcium: 30,
   },
   {
     id: 'feteer_stuffed_sausage',
@@ -496,7 +544,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 78,
     fats: 52,
     servingSize: 300,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 3.5, sugar: 4, sodium: 1250, potassium: 380, iron: 4.2, calcium: 85, vitaminB12: 1.5,
   },
   {
     id: 'shish_tawook_grilled',
@@ -507,7 +556,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 4,
     fats: 16,
     servingSize: 200,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 1, sugar: 2, sodium: 650, potassium: 450, iron: 1.8, calcium: 35, vitaminC: 8,
   },
   {
     id: 'kabsa_chicken',
@@ -518,7 +568,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 78,
     fats: 22,
     servingSize: 400,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 4.5, sugar: 3.5, sodium: 980, potassium: 580, iron: 3.2, calcium: 65, vitaminA: 85, vitaminC: 12,
   },
   {
     id: 'kabsa_lamb',
@@ -529,7 +580,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 78,
     fats: 34,
     servingSize: 400,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 4.5, sugar: 3.5, sodium: 1050, potassium: 650, iron: 4.5, calcium: 75, vitaminA: 90, vitaminC: 12, vitaminB12: 2.5,
   },
   {
     id: 'mandi_chicken',
@@ -540,7 +592,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 75,
     fats: 20,
     servingSize: 400,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 3.5, sugar: 2.5, sodium: 880, potassium: 520, iron: 2.8, calcium: 55, vitaminA: 60, vitaminC: 8,
   },
   {
     id: 'mandi_meat',
@@ -551,7 +604,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 75,
     fats: 31,
     servingSize: 400,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 3.5, sugar: 2.5, sodium: 950, potassium: 620, iron: 4.2, calcium: 65, vitaminA: 65, vitaminC: 8, vitaminB12: 2.8,
   },
   {
     id: 'shakshuka_egyptian',
@@ -562,7 +616,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 12,
     fats: 13,
     servingSize: 200,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 2.5, sugar: 4.5, sodium: 520, potassium: 480, iron: 2.8, calcium: 85, vitaminA: 250, vitaminC: 25, vitaminD: 1.5, vitaminB12: 1.2,
   },
   {
     id: 'feseekh_fish',
@@ -573,7 +628,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 0,
     fats: 20,
     servingSize: 150,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 3500, potassium: 420, iron: 1.5, calcium: 45, vitaminD: 12, vitaminB12: 4.5,
   },
   {
     id: 'renga_fish',
@@ -584,7 +640,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 0,
     fats: 20,
     servingSize: 150,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 1800, potassium: 380, iron: 1.2, calcium: 40, vitaminD: 8.5, vitaminB12: 3.8,
   },
   {
     id: 'halawa_plain',
@@ -595,7 +652,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 54,
     fats: 28,
     servingSize: 100,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 3.5, sugar: 45, sodium: 85, potassium: 250, iron: 2.5, calcium: 120,
   },
   {
     id: 'mesh_cheese',
@@ -606,7 +664,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 8,
     fats: 17,
     servingSize: 100,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 1, sugar: 2.5, sodium: 1850, potassium: 150, iron: 0.8, calcium: 450, vitaminA: 180, vitaminB12: 1.5,
   },
   {
     id: 'rokak_beef',
@@ -617,7 +676,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 42,
     fats: 24,
     servingSize: 200,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 2.5, sugar: 2, sodium: 680, potassium: 320, iron: 3.5, calcium: 55, vitaminB12: 1.6,
   },
   {
     id: 'lentil_soup_egyptian',
@@ -628,7 +688,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 28,
     fats: 3,
     servingSize: 250,
-    servingUnit: 'ml'
+    servingUnit: 'ml',
+    fiber: 6.5, sugar: 2.5, sodium: 580, potassium: 450, iron: 3.2, calcium: 45, vitaminA: 120, vitaminC: 8,
   },
   {
     id: 'kunafa_cheese',
@@ -639,7 +700,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 62,
     fats: 22,
     servingSize: 120,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 1.5, sugar: 28, sodium: 320, potassium: 120, iron: 1.2, calcium: 250, vitaminA: 85,
   },
   {
     id: 'basbousa_almonds',
@@ -650,7 +712,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 68,
     fats: 15,
     servingSize: 100,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 2, sugar: 35, sodium: 180, potassium: 140, iron: 1.5, calcium: 65,
   },
   {
     id: 'qatayef_nuts',
@@ -661,7 +724,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 48,
     fats: 13,
     servingSize: 100,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 2.5, sugar: 22, sodium: 150, potassium: 180, iron: 1.8, calcium: 45,
   },
   {
     id: 'kahk_plain',
@@ -672,7 +736,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 14,
     fats: 7,
     servingSize: 1,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 0.5, sugar: 6.5, sodium: 45, potassium: 35, iron: 0.4, calcium: 12,
   },
   {
     id: 'griba_egyptian',
@@ -683,7 +748,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 16,
     fats: 9,
     servingSize: 1,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 0.2, sugar: 8.5, sodium: 30, potassium: 25, iron: 0.3, calcium: 10,
   },
   {
     id: 'zalabia_syrup',
@@ -694,7 +760,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 72,
     fats: 9,
     servingSize: 150,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 1.5, sugar: 38, sodium: 180, potassium: 85, iron: 1.2, calcium: 25,
   },
   {
     id: 'ali_om_desert',
@@ -705,7 +772,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 58,
     fats: 25,
     servingSize: 200,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 2.5, sugar: 28, sodium: 280, potassium: 320, iron: 1.5, calcium: 220, vitaminA: 110, vitaminD: 1.5,
   },
   {
     id: 'asb_juice',
@@ -716,7 +784,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 32,
     fats: 0,
     servingSize: 250,
-    servingUnit: 'ml'
+    servingUnit: 'ml',
+    fiber: 0, sugar: 32, sodium: 10, potassium: 160, iron: 0.5, calcium: 25,
   },
   {
     id: 'sobia_drink',
@@ -727,7 +796,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 38,
     fats: 6,
     servingSize: 250,
-    servingUnit: 'ml'
+    servingUnit: 'ml',
+    fiber: 1, sugar: 24, sodium: 85, potassium: 120, iron: 0.4, calcium: 150, vitaminD: 1.2,
   },
 
   // ==========================================
@@ -852,7 +922,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 46,
     fats: 28,
     servingSize: 1,
-    servingUnit: 'burger'
+    servingUnit: 'burger',
+    fiber: 10, sugar: 4, sodium: 650, potassium: 620, iron: 4.5, calcium: 85, vitaminC: 15,
   },
   {
     id: 'mcd_double_cheeseburger',
@@ -1230,447 +1301,355 @@ export const STATIC_FOOD_DATABASE: Food[] = [
   },
 
   // ==========================================
-  // RAW INGREDIENTS (126-185)
+  // RAW INGREDIENTS (126-185) — USDA FoodData Central values
   // ==========================================
   {
     id: 'raw_chicken_breast',
     name: 'Raw Skinless Chicken Breast',
     category: 'Raw',
-    calories: 120,
-    protein: 22.5,
-    carbs: 0,
-    fats: 2.6,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 120, protein: 22.5, carbs: 0, fats: 2.6,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 74, potassium: 220, iron: 0.9, calcium: 11,
+    vitaminD: 1, vitaminB12: 0.3,
   },
   {
     id: 'raw_chicken_thigh',
     name: 'Raw Skinless Chicken Thigh',
     category: 'Raw',
-    calories: 119,
-    protein: 19.7,
-    carbs: 0,
-    fats: 4.5,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 119, protein: 19.7, carbs: 0, fats: 4.5,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 82, potassium: 225, iron: 1.3, calcium: 10,
+    vitaminD: 0.5, vitaminB12: 0.5,
   },
   {
     id: 'raw_beef_lean_95',
     name: 'Raw Lean Beef (95% Lean, 5% Fat)',
     category: 'Raw',
-    calories: 137,
-    protein: 21.4,
-    carbs: 0,
-    fats: 5,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 137, protein: 21.4, carbs: 0, fats: 5,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 62, potassium: 330, iron: 2.7, calcium: 14,
+    vitaminB12: 2.6,
   },
   {
     id: 'raw_beef_regular_80',
     name: 'Raw Beef Ground (80% Lean, 20% Fat)',
     category: 'Raw',
-    calories: 254,
-    protein: 17.2,
-    carbs: 0,
-    fats: 20,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 254, protein: 17.2, carbs: 0, fats: 20,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 75, potassium: 280, iron: 2.2, calcium: 12,
+    vitaminB12: 2.1,
   },
   {
     id: 'raw_lamb_leg',
     name: 'Raw Lamb Leg (Lean Cut)',
     category: 'Raw',
-    calories: 162,
-    protein: 20.1,
-    carbs: 0,
-    fats: 9,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 162, protein: 20.1, carbs: 0, fats: 9,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 72, potassium: 310, iron: 2.4, calcium: 17,
+    vitaminB12: 2.5,
   },
   {
     id: 'raw_egg_whole',
     name: 'Whole Fresh Chicken Egg (Large)',
     category: 'Raw',
-    calories: 72,
-    protein: 6.3,
-    carbs: 0.4,
-    fats: 4.8,
-    servingSize: 1,
-    servingUnit: 'piece'
+    calories: 72, protein: 6.3, carbs: 0.4, fats: 4.8,
+    servingSize: 1, servingUnit: 'piece',
+    fiber: 0, sugar: 0.2, sodium: 71, potassium: 69, iron: 1.75, calcium: 56,
+    vitaminA: 160, vitaminD: 2.2, vitaminB12: 1.1,
   },
   {
     id: 'raw_egg_white',
     name: 'Fresh Egg White (Liquid)',
     category: 'Raw',
-    calories: 17,
-    protein: 3.6,
-    carbs: 0.2,
-    fats: 0,
-    servingSize: 1,
-    servingUnit: 'piece'
+    calories: 17, protein: 3.6, carbs: 0.2, fats: 0,
+    servingSize: 1, servingUnit: 'piece',
+    fiber: 0, sugar: 0.2, sodium: 54, potassium: 163, iron: 0.08, calcium: 7,
+    vitaminB12: 0.09,
   },
   {
     id: 'raw_salmon_atlantic',
     name: 'Raw Atlantic Salmon Fillet',
     category: 'Raw',
-    calories: 208,
-    protein: 20.4,
-    carbs: 0,
-    fats: 13.4,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 208, protein: 20.4, carbs: 0, fats: 13.4,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 59, potassium: 363, iron: 0.8, calcium: 12,
+    vitaminD: 526, vitaminB12: 3.2,
   },
   {
     id: 'raw_tuna_yellowfin',
     name: 'Raw Yellowfin Tuna Steak',
     category: 'Raw',
-    calories: 109,
-    protein: 24.4,
-    carbs: 0,
-    fats: 0.5,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 109, protein: 24.4, carbs: 0, fats: 0.5,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 45, potassium: 441, iron: 1.02, calcium: 4,
+    vitaminD: 5.7, vitaminB12: 2.2,
   },
   {
     id: 'raw_tilapia_fish',
     name: 'Raw Tilapia Fillet',
     category: 'Raw',
-    calories: 96,
-    protein: 20.1,
-    carbs: 0,
-    fats: 1.7,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 96, protein: 20.1, carbs: 0, fats: 1.7,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 52, potassium: 302, iron: 0.56, calcium: 10,
+    vitaminD: 3.1, vitaminB12: 1.6,
   },
   {
     id: 'raw_shrimp',
     name: 'Raw Peeled Clean Shrimp',
     category: 'Raw',
-    calories: 85,
-    protein: 20.1,
-    carbs: 0,
-    fats: 0.5,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 85, protein: 20.1, carbs: 0, fats: 0.5,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 566, potassium: 259, iron: 2.41, calcium: 64,
+    vitaminD: 0.3, vitaminB12: 1.16,
   },
   {
     id: 'raw_white_rice',
     name: 'Uncooked Short-Grain White Rice',
     category: 'Raw',
-    calories: 358,
-    protein: 6.5,
-    carbs: 79.2,
-    fats: 0.5,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 358, protein: 6.5, carbs: 79.2, fats: 0.5,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0.4, sugar: 0.1, sodium: 5, potassium: 35, iron: 0.8, calcium: 10,
   },
   {
     id: 'raw_brown_rice',
     name: 'Uncooked Whole Grain Brown Rice',
     category: 'Raw',
-    calories: 362,
-    protein: 7.5,
-    carbs: 76.2,
-    fats: 2.7,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 362, protein: 7.5, carbs: 76.2, fats: 2.7,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 3.4, sugar: 0.7, sodium: 7, potassium: 223, iron: 1.5, calcium: 23,
   },
   {
     id: 'raw_basmati_rice',
     name: 'Uncooked Long Basmati Rice',
     category: 'Raw',
-    calories: 356,
-    protein: 8.0,
-    carbs: 77.5,
-    fats: 0.8,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 356, protein: 8.0, carbs: 77.5, fats: 0.8,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0.4, sugar: 0.1, sodium: 5, potassium: 35, iron: 0.8, calcium: 10,
   },
   {
     id: 'raw_oats_rolled',
     name: 'Dry Rolled Oats (A-Grade)',
     category: 'Raw',
-    calories: 389,
-    protein: 16.9,
-    carbs: 66,
-    fats: 6.9,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 389, protein: 16.9, carbs: 66, fats: 6.9,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 10.6, sugar: 0, sodium: 2, potassium: 429, iron: 4.72, calcium: 54,
   },
   {
     id: 'raw_quinoa',
     name: 'Dry Organic Quinoa Seeds',
     category: 'Raw',
-    calories: 368,
-    protein: 14.1,
-    carbs: 64.2,
-    fats: 6.1,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 368, protein: 14.1, carbs: 64.2, fats: 6.1,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 7.0, sugar: 0, sodium: 5, potassium: 563, iron: 4.57, calcium: 47,
   },
   {
     id: 'raw_pasta_durum',
     name: 'Dry Durum Wheat Pasta',
     category: 'Raw',
-    calories: 355,
-    protein: 12.5,
-    carbs: 73,
-    fats: 1.5,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 355, protein: 12.5, carbs: 73, fats: 1.5,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 3.2, sugar: 2.5, sodium: 6, potassium: 223, iron: 3.3, calcium: 27,
   },
   {
     id: 'raw_whole_milk',
     name: 'Fresh Whole Cow Milk (3% Fat)',
     category: 'Raw',
-    calories: 61,
-    protein: 3.2,
-    carbs: 4.8,
-    fats: 3.3,
-    servingSize: 100,
-    servingUnit: 'ml'
+    calories: 61, protein: 3.2, carbs: 4.8, fats: 3.3,
+    servingSize: 100, servingUnit: 'ml',
+    fiber: 0, sugar: 4.8, sodium: 43, potassium: 132, iron: 0.03, calcium: 113,
+    vitaminA: 46, vitaminD: 2, vitaminB12: 0.45,
   },
   {
     id: 'raw_skimmed_milk',
     name: 'Skimmed Cow Milk (0.1% Fat)',
     category: 'Raw',
-    calories: 34,
-    protein: 3.4,
-    carbs: 5.0,
-    fats: 0.1,
-    servingSize: 100,
-    servingUnit: 'ml'
+    calories: 34, protein: 3.4, carbs: 5.0, fats: 0.1,
+    servingSize: 100, servingUnit: 'ml',
+    fiber: 0, sugar: 5.0, sodium: 44, potassium: 156, iron: 0.01, calcium: 125,
+    vitaminA: 49, vitaminD: 1, vitaminB12: 0.47,
   },
   {
     id: 'raw_greek_yogurt_0',
     name: 'Greek Yogurt Plain (0% Fat)',
     category: 'Raw',
-    calories: 59,
-    protein: 10,
-    carbs: 3.6,
-    fats: 0.4,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 59, protein: 10, carbs: 3.6, fats: 0.4,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 3.6, sodium: 36, potassium: 141, iron: 0.07, calcium: 110,
+    vitaminB12: 0.75,
   },
   {
     id: 'raw_greek_yogurt_5',
     name: 'Greek Yogurt Plain (5% Full Fat)',
     category: 'Raw',
-    calories: 95,
-    protein: 9,
-    carbs: 4,
-    fats: 5,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 95, protein: 9, carbs: 4, fats: 5,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 4.0, sodium: 47, potassium: 141, iron: 0.07, calcium: 100,
+    vitaminB12: 0.7,
   },
   {
     id: 'raw_cottage_cheese',
     name: 'Fresh Cottage Cheese Low-Fat',
     category: 'Raw',
-    calories: 72,
-    protein: 11,
-    carbs: 3.4,
-    fats: 1.5,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 72, protein: 11, carbs: 3.4, fats: 1.5,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 2.7, sodium: 364, potassium: 104, iron: 0.07, calcium: 83,
+    vitaminB12: 0.43,
   },
   {
     id: 'raw_olive_oil_extra',
     name: 'Extra Virgin Olive Oil',
     category: 'Raw',
-    calories: 884,
-    protein: 0,
-    carbs: 0,
-    fats: 100,
-    servingSize: 100,
-    servingUnit: 'ml'
+    calories: 884, protein: 0, carbs: 0, fats: 100,
+    servingSize: 100, servingUnit: 'ml',
+    fiber: 0, sugar: 0, sodium: 2, potassium: 1, iron: 0.56, calcium: 1,
+    vitaminA: 0, vitaminD: 0,
   },
   {
     id: 'raw_coconut_oil',
     name: 'Organic Virgin Coconut Oil',
     category: 'Raw',
-    calories: 862,
-    protein: 0,
-    carbs: 0,
-    fats: 100,
-    servingSize: 100,
-    servingUnit: 'ml'
+    calories: 862, protein: 0, carbs: 0, fats: 100,
+    servingSize: 100, servingUnit: 'ml',
+    fiber: 0, sugar: 0, sodium: 0, potassium: 0, iron: 0, calcium: 0,
   },
   {
     id: 'raw_butter_salted',
     name: 'Pure Butter Salted (Cow)',
     category: 'Raw',
-    calories: 717,
-    protein: 0.8,
-    carbs: 0.1,
-    fats: 81,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 717, protein: 0.8, carbs: 0.1, fats: 81,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0, sugar: 0.1, sodium: 643, potassium: 24, iron: 0.02, calcium: 24,
+    vitaminA: 684, vitaminD: 1.5,
   },
   {
     id: 'raw_peanut_butter_natural',
     name: 'Natural Unsweetened Peanut Butter',
     category: 'Raw',
-    calories: 588,
-    protein: 25,
-    carbs: 20,
-    fats: 50,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 588, protein: 25, carbs: 20, fats: 50,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 6.0, sugar: 6.7, sodium: 17, potassium: 649, iron: 1.9, calcium: 49,
   },
   {
     id: 'raw_almonds_shelled',
     name: 'Raw Shelled Sweet Almonds',
     category: 'Raw',
-    calories: 579,
-    protein: 21,
-    carbs: 21,
-    fats: 49,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 579, protein: 21, carbs: 21, fats: 49,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 12.5, sugar: 4.4, sodium: 1, potassium: 733, iron: 3.71, calcium: 264,
+    vitaminA: 0, vitaminD: 0,
   },
   {
     id: 'raw_walnuts_shelled',
     name: 'Raw English Walnuts Shelled',
     category: 'Raw',
-    calories: 654,
-    protein: 15,
-    carbs: 13,
-    fats: 65,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 654, protein: 15, carbs: 13, fats: 65,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 6.7, sugar: 2.6, sodium: 2, potassium: 441, iron: 2.91, calcium: 98,
   },
   {
     id: 'raw_chia_seeds',
     name: 'Raw Organic Chia Seeds',
     category: 'Raw',
-    calories: 486,
-    protein: 16.5,
-    carbs: 42.1,
-    fats: 30.7,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 486, protein: 16.5, carbs: 42.1, fats: 30.7,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 34.4, sugar: 0, sodium: 16, potassium: 407, iron: 7.72, calcium: 631,
   },
   {
     id: 'raw_flax_seeds',
     name: 'Raw Brown Flax Seeds',
     category: 'Raw',
-    calories: 534,
-    protein: 18.3,
-    carbs: 28.9,
-    fats: 42.2,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 534, protein: 18.3, carbs: 28.9, fats: 42.2,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 27.3, sugar: 1.6, sodium: 30, potassium: 813, iron: 5.73, calcium: 255,
   },
   {
     id: 'raw_avocado_fresh',
     name: 'Fresh Raw Avocado Hass',
     category: 'Raw',
-    calories: 160,
-    protein: 2,
-    carbs: 8.5,
-    fats: 14.7,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 160, protein: 2, carbs: 8.5, fats: 14.7,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 6.7, sugar: 0.7, sodium: 7, potassium: 485, iron: 0.55, calcium: 12,
+    vitaminA: 7, vitaminC: 10,
   },
   {
     id: 'raw_banana_ripe',
     name: 'Fresh Ripe Yellow Banana',
     category: 'Raw',
-    calories: 89,
-    protein: 1.1,
-    carbs: 22.8,
-    fats: 0.3,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 89, protein: 1.1, carbs: 22.8, fats: 0.3,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 2.6, sugar: 12.2, sodium: 1, potassium: 358, iron: 0.26, calcium: 5,
+    vitaminA: 3, vitaminC: 8.7,
   },
   {
     id: 'raw_apple_gala',
     name: 'Fresh Gala Apple with Skin',
     category: 'Raw',
-    calories: 52,
-    protein: 0.3,
-    carbs: 13.8,
-    fats: 0.2,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 52, protein: 0.3, carbs: 13.8, fats: 0.2,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 2.4, sugar: 10.4, sodium: 1, potassium: 107, iron: 0.12, calcium: 6,
+    vitaminA: 3, vitaminC: 4.6,
   },
   {
     id: 'raw_strawberry_fresh',
     name: 'Fresh Sweet Strawberry Plump',
     category: 'Raw',
-    calories: 32,
-    protein: 0.7,
-    carbs: 7.7,
-    fats: 0.3,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 32, protein: 0.7, carbs: 7.7, fats: 0.3,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 2.0, sugar: 4.9, sodium: 1, potassium: 153, iron: 0.41, calcium: 16,
+    vitaminA: 1, vitaminC: 58.8,
   },
   {
     id: 'raw_spinach_leaves',
     name: 'Fresh Spinach Baby Leaves',
     category: 'Raw',
-    calories: 23,
-    protein: 2.9,
-    carbs: 3.6,
-    fats: 0.4,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 23, protein: 2.9, carbs: 3.6, fats: 0.4,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 2.2, sugar: 0.4, sodium: 79, potassium: 558, iron: 2.71, calcium: 99,
+    vitaminA: 469, vitaminC: 28.1,
   },
   {
     id: 'raw_broccoli_florets',
     name: 'Fresh Raw Broccoli Florets',
     category: 'Raw',
-    calories: 34,
-    protein: 2.8,
-    carbs: 6.6,
-    fats: 0.3,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 34, protein: 2.8, carbs: 6.6, fats: 0.3,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 2.6, sugar: 1.7, sodium: 33, potassium: 316, iron: 0.73, calcium: 47,
+    vitaminA: 31, vitaminC: 89.2,
   },
   {
     id: 'raw_potato_russet',
     name: 'Raw Russet Potato Skinless',
     category: 'Raw',
-    calories: 77,
-    protein: 2.0,
-    carbs: 17.5,
-    fats: 0.1,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 77, protein: 2.0, carbs: 17.5, fats: 0.1,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 2.1, sugar: 0.8, sodium: 6, potassium: 425, iron: 0.78, calcium: 12,
+    vitaminC: 19.7,
   },
   {
     id: 'raw_sweet_potato',
     name: 'Raw Red Sweet Potato',
     category: 'Raw',
-    calories: 86,
-    protein: 1.6,
-    carbs: 20.1,
-    fats: 0.1,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 86, protein: 1.6, carbs: 20.1, fats: 0.1,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 3.0, sugar: 4.2, sodium: 55, potassium: 337, iron: 0.61, calcium: 30,
+    vitaminA: 961, vitaminC: 2.4,
   },
   {
     id: 'raw_honey_organic',
     name: 'Organic Raw Natural Honey',
     category: 'Raw',
-    calories: 304,
-    protein: 0.3,
-    carbs: 82.4,
-    fats: 0,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 304, protein: 0.3, carbs: 82.4, fats: 0,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 0.2, sugar: 82.1, sodium: 4, potassium: 52, iron: 0.42, calcium: 6,
   },
   {
     id: 'raw_dates_dry',
     name: 'Unprocessed Dry Desert Dates',
     category: 'Raw',
-    calories: 282,
-    protein: 2.5,
-    carbs: 75.0,
-    fats: 0.4,
-    servingSize: 100,
-    servingUnit: 'g'
+    calories: 282, protein: 2.5, carbs: 75.0, fats: 0.4,
+    servingSize: 100, servingUnit: 'g',
+    fiber: 8.0, sugar: 64.0, sodium: 2, potassium: 696, iron: 1.02, calcium: 39,
+    vitaminA: 7,
   },
 
   // ==========================================
@@ -1685,7 +1664,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 1,
     fats: 1,
     servingSize: 30,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0, sugar: 1, sodium: 130, potassium: 210, iron: 0.4, calcium: 130,
   },
   {
     id: 'supp_whey_concentrate_myp',
@@ -1696,7 +1676,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 1,
     fats: 1.9,
     servingSize: 25,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0, sugar: 1, sodium: 50, potassium: 150, iron: 0.2, calcium: 100,
   },
   {
     id: 'supp_casein_protein',
@@ -1707,7 +1688,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 1.5,
     fats: 0.5,
     servingSize: 33,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0, sugar: 1, sodium: 260, potassium: 300, iron: 0.4, calcium: 600,
   },
   {
     id: 'supp_creatine_mono_unflavored',
@@ -1718,7 +1700,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 0,
     fats: 0,
     servingSize: 5,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 0, potassium: 0, iron: 0, calcium: 0,
   },
   {
     id: 'supp_pre_workout_c4',
@@ -1729,7 +1712,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 1,
     fats: 0,
     servingSize: 6.5,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 15, potassium: 20, iron: 0, calcium: 24, vitaminC: 250, vitaminB12: 30,
   },
   {
     id: 'supp_bcaa_amino_energy',
@@ -1740,7 +1724,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 2,
     fats: 0,
     servingSize: 9,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 10, potassium: 15, iron: 0, calcium: 0, vitaminC: 24,
   },
   {
     id: 'supp_fish_oil_omega3',
@@ -1751,7 +1736,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 0,
     fats: 1.5,
     servingSize: 1,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 0, sugar: 0, sodium: 0, potassium: 0, iron: 0, calcium: 0,
   },
   {
     id: 'supp_multivitamin_men',
@@ -1762,7 +1748,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 0,
     fats: 0,
     servingSize: 1,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 0, sugar: 0, sodium: 0, potassium: 0, iron: 0, calcium: 200, vitaminA: 3000, vitaminC: 300, vitaminD: 1500, vitaminB12: 90,
   },
   {
     id: 'supp_mass_gainer_serious',
@@ -1773,7 +1760,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 252,
     fats: 4.5,
     servingSize: 336,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 4, sugar: 20, sodium: 410, potassium: 1560, iron: 4.8, calcium: 600, vitaminA: 750, vitaminC: 60, vitaminD: 200,
   },
   {
     id: 'supp_protein_bar_quest',
@@ -1784,7 +1772,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 21,
     fats: 9,
     servingSize: 60,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 14, sugar: 1, sodium: 220, potassium: 110, iron: 1.1, calcium: 100,
   },
   {
     id: 'supp_protein_bar_grenade',
@@ -1795,7 +1784,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 20,
     fats: 8,
     servingSize: 60,
-    servingUnit: 'piece'
+    servingUnit: 'piece',
+    fiber: 2, sugar: 2, sodium: 140, potassium: 120, iron: 0.8, calcium: 130,
   },
   {
     id: 'supp_collagen_peptides',
@@ -1806,7 +1796,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 0,
     fats: 0,
     servingSize: 10,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 50, potassium: 0, iron: 0, calcium: 0,
   },
   {
     id: 'supp_peanut_butter_powder',
@@ -1817,7 +1808,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 5,
     fats: 1.5,
     servingSize: 13,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 1, sugar: 2, sodium: 94, potassium: 150, iron: 0.4, calcium: 15,
   },
   {
     id: 'supp_l_carnitine_liquid',
@@ -1828,7 +1820,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 0,
     fats: 0,
     servingSize: 15,
-    servingUnit: 'ml'
+    servingUnit: 'ml',
+    fiber: 0, sugar: 0, sodium: 0, potassium: 0, iron: 0, calcium: 0,
   },
   {
     id: 'supp_isopure_zero_carb',
@@ -1839,7 +1832,8 @@ export const STATIC_FOOD_DATABASE: Food[] = [
     carbs: 0,
     fats: 0.5,
     servingSize: 29,
-    servingUnit: 'g'
+    servingUnit: 'g',
+    fiber: 0, sugar: 0, sodium: 240, potassium: 380, iron: 1, calcium: 340, vitaminA: 380, vitaminC: 15,
   }
 ];
 
@@ -2022,15 +2016,16 @@ const rawCategories = [
   { base: 'Purple Cabbage Fresh Raw', protein: 1.4, fat: 0.2, carb: 7.4, cal: 31, unit: 'g' }
 ];
 
+
+
 /**
- * Generates an massive list of meals (category: Local / International)
+ * Generates a massive list of meals (category: Local / International)
  * to satisfy the "1000+ foods" requirement programmatically.
  */
 function generateDynamicFoods(): Food[] {
   const dynamicFoods: Food[] = [];
   let index = 1;
 
-  // We loop to generate exactly 1020 unique food combinations
   for (let p = 0; p < proteinBases.length; p++) {
     for (let c = 0; c < carbBases.length; c++) {
       for (let v = 0; v < veggiesExtras.length; v++) {
@@ -2039,19 +2034,28 @@ function generateDynamicFoods(): Food[] {
         const carb = carbBases[c];
         const veg = veggiesExtras[v];
 
-        // Determine Portion sizes dynamically to produce highly realistic and unique macro values
-        const proteinPortion = 100 + (index % 4) * 50; // 100g, 150g, 200g, 250g
-        const carbPortion = 100 + (index % 5) * 50;    // 100g, 150g, 200g, 250g, 300g
-        const vegPortion = 50 + (index % 3) * 50;      // 50g, 100g, 150g
+        const proteinPortion = 100 + (index % 4) * 50;
+        const carbPortion    = 100 + (index % 5) * 50;
+        const vegPortion     = 50  + (index % 3) * 50;
+        const totalPortion   = proteinPortion + carbPortion + vegPortion;
 
-        // Portion calculations
-        const computedProtein = parseFloat(((prot.protein * proteinPortion / 100) + (carb.protein * carbPortion / 100) + (veg.protein * vegPortion / 100)).toFixed(1));
-        const computedCarbs = parseFloat(((prot.carb * proteinPortion / 100) + (carb.carb * carbPortion / 100) + (veg.carb * vegPortion / 100)).toFixed(1));
-        const computedFats = parseFloat(((prot.fat * proteinPortion / 100) + (carb.fat * carbPortion / 100) + (veg.fat * vegPortion / 100)).toFixed(1));
+        const computedProtein  = parseFloat(((prot.protein * proteinPortion / 100) + (carb.protein * carbPortion / 100) + (veg.protein * vegPortion / 100)).toFixed(1));
+        const computedCarbs    = parseFloat(((prot.carb * proteinPortion / 100)    + (carb.carb * carbPortion / 100)    + (veg.carb * vegPortion / 100)).toFixed(1));
+        const computedFats     = parseFloat(((prot.fat * proteinPortion / 100)     + (carb.fat * carbPortion / 100)     + (veg.fat * vegPortion / 100)).toFixed(1));
         const computedCalories = Math.round((prot.cal * proteinPortion / 100) + (carb.cal * carbPortion / 100) + (veg.cal * vegPortion / 100));
 
         const isLocal = (index % 2 === 0);
         const mealName = `${prep}: ${prot.name} (${proteinPortion}g) with ${carb.name} (${carbPortion}g) & ${veg.name}`;
+
+        // Direct arithmetic micronutrient estimates (per user spec)
+        const fiber     = parseFloat(((carbPortion * 0.015) + (vegPortion * 0.025)).toFixed(1));
+        const sugar     = parseFloat(((carbPortion * 0.005) + (vegPortion * 0.02)).toFixed(1));
+        const sodium    = Math.round((proteinPortion * 0.65) + (carbPortion * 0.05));
+        const potassium = Math.round((proteinPortion * 2.8)  + (carbPortion * 1.0) + (vegPortion * 2.5));
+        const iron      = parseFloat(((proteinPortion * 0.012) + (carbPortion * 0.008)).toFixed(1));
+        const calcium   = Math.round((proteinPortion * 0.12) + (carbPortion * 0.1) + (vegPortion * 0.4));
+        const vitaminC  = Math.round(vegPortion * 0.25);
+        const vitaminA  = Math.round(vegPortion * 1.2);
 
         dynamicFoods.push({
           id: `dyn_food_${index}`,
@@ -2061,14 +2065,20 @@ function generateDynamicFoods(): Food[] {
           protein: computedProtein,
           carbs: computedCarbs,
           fats: computedFats,
-          servingSize: proteinPortion + carbPortion + vegPortion,
-          servingUnit: 'g'
+          servingSize: totalPortion,
+          servingUnit: 'g',
+          fiber,
+          sugar,
+          sodium,
+          potassium,
+          iron,
+          calcium,
+          vitaminC,
+          vitaminA,
         });
 
         index++;
-        if (index > 1020) {
-          break;
-        }
+        if (index > 1020) break;
       }
       if (index > 1020) break;
     }
@@ -2079,34 +2089,52 @@ function generateDynamicFoods(): Food[] {
 }
 
 /**
- * Generates an massive list of raw ingredients (category: Raw / Supplement)
- * to satisfy the "1000+ ingredients" requirement programmatically.
+ * Generates a massive list of raw ingredients (category: Raw / Supplement).
  */
 function generateDynamicIngredients(): Food[] {
   const dynamicIngredients: Food[] = [];
   let index = 1;
 
-  // We loop to generate exactly 1020 unique raw and supplement materials with different brand qualities and custom weights
   for (let c = 0; c < rawCategories.length; c++) {
     for (let b = 0; b < rawBrands.length; b++) {
-      // Modify nutritional elements slightly based on brand to make them authentic and unique
       const baseCategory = rawCategories[c];
       const brand = rawBrands[b];
 
-      // Let's create multiple variations per category and brand to reach > 1000 easily
       for (let varId = 1; varId <= 2; varId++) {
-        // Vary the serving sizes: standard 100g, premium bulk 500g, or wholesale 1000g
         const multiplier = varId === 1 ? 1 : 2.5;
-        const currentServingSize = baseCategory.unit === 'g' ? (100 * multiplier) : (100 * multiplier);
+        const currentServingSize = 100 * multiplier;
 
-        const modProtein = parseFloat((baseCategory.protein * multiplier).toFixed(1));
-        const modCarbs = parseFloat((baseCategory.carb * multiplier).toFixed(1));
-        const modFats = parseFloat((baseCategory.fat * multiplier).toFixed(1));
+        const modProtein  = parseFloat((baseCategory.protein * multiplier).toFixed(1));
+        const modCarbs    = parseFloat((baseCategory.carb    * multiplier).toFixed(1));
+        const modFats     = parseFloat((baseCategory.fat     * multiplier).toFixed(1));
         const modCalories = Math.round(baseCategory.cal * multiplier);
 
         const finalName = `${brand} - Raw ${baseCategory.base} (${currentServingSize}${baseCategory.unit})`;
-
         const isSupplement = (c >= rawCategories.length - 10) && (index % 3 === 0);
+
+        // Classify by dominant macro to determine micronutrient profile
+        const isProteinItem = modProtein > modCarbs && modProtein > modFats;
+        const isFatItem     = modFats > modProtein && modFats > modCarbs;
+        // Otherwise carb item
+
+        let fiber = 0, sugar = 0, sodium = 0, potassium = 0, iron = 0, calcium = 0;
+
+        if (isProteinItem) {
+          sodium    = Math.round(modCalories * 0.35);
+          potassium = Math.round(modProtein  * 12);
+          iron      = parseFloat((modProtein  * 0.05).toFixed(1));
+          calcium   = Math.round(modProtein  * 0.5);
+        } else if (isFatItem) {
+          potassium = Math.round(modProtein * 8);
+        } else {
+          // Carb item
+          fiber     = parseFloat((modCarbs * 0.02).toFixed(1));
+          sugar     = parseFloat((modCarbs * 0.008).toFixed(1));
+          sodium    = 5;
+          potassium = Math.round(modCarbs * 1.3);
+          iron      = parseFloat((modCarbs * 0.01).toFixed(1));
+          calcium   = Math.round(modCarbs * 0.12);
+        }
 
         dynamicIngredients.push({
           id: `dyn_ing_${index}_v${varId}`,
@@ -2117,13 +2145,17 @@ function generateDynamicIngredients(): Food[] {
           carbs: modCarbs,
           fats: modFats,
           servingSize: currentServingSize,
-          servingUnit: baseCategory.unit
+          servingUnit: baseCategory.unit,
+          fiber,
+          sugar,
+          sodium,
+          potassium,
+          iron,
+          calcium,
         });
 
         index++;
-        if (index > 1020) {
-          break;
-        }
+        if (index > 1020) break;
       }
       if (index > 1020) break;
     }

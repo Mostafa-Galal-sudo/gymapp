@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useWorkoutStore } from '../store/useWorkoutStore';
 import { useGamificationStore } from '../store/useGamificationStore';
 import { useExerciseStore } from '../store/useExerciseStore';
+import { useLanguageStore } from '../store/useLanguageStore';
 import { PlateCalculator } from '../components/PlateCalculator';
 import {
   Play, Check, ChevronDown, ChevronUp, X, 
@@ -141,7 +142,7 @@ const ModalWrapper = ({ children, onClose }: any) => (
     padding: '1.5rem', animation: 'fadeIn 0.2s ease', overflowY: 'auto'
   }}>
     <div className="glass-card" style={{ width: '100%', maxWidth: 480, padding: '1.5rem', position: 'relative' }}>
-      <button onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', color: 'var(--color-text-muted)' }}><X size={20} /></button>
+      <button onClick={onClose} style={{ position: 'absolute', top: '1rem', insetInlineEnd: '1rem', color: 'var(--color-text-muted)' }}><X size={20} /></button>
       {children}
     </div>
   </div>
@@ -235,16 +236,19 @@ const SwapModal = ({ currentExId, currentCategory, currentMuscle, onClose }: any
       <input type="text" placeholder={t('workout.search_alt')} value={search} onChange={e => setSearch(e.target.value)} style={{ marginBottom: '1rem' }} />
 
       <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-        {filtered.map(ex => (
+        {filtered.map(ex => {
+          const exName = useLanguageStore.getState().lang === 'ar' && ex.nameAr ? ex.nameAr : ex.name;
+          return (
           <button key={ex.id} onClick={() => handleSwap(ex.id)}
             style={{
-              width: '100%', textAlign: 'left', padding: '0.75rem',
+              width: '100%', textAlign: 'start', padding: '0.75rem',
               borderBottom: '1px solid rgba(0,240,255,0.1)', color: 'var(--color-text)',
             }}>
-            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{ex.name}</div>
+            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{exName}</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{ex.category} · {ex.muscleGroup}</div>
           </button>
-        ))}
+        );
+        })}
       </div>
     </ModalWrapper>
   );
@@ -391,16 +395,19 @@ const AddExerciseModal = ({ onClose }: any) => {
       <input type="text" placeholder={t('workout.search_alt')} value={search} onChange={e => setSearch(e.target.value)} style={{ marginBottom: '1rem' }} />
 
       <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-        {filtered.map(ex => (
+        {filtered.map(ex => {
+          const exName = useLanguageStore.getState().lang === 'ar' && ex.nameAr ? ex.nameAr : ex.name;
+          return (
           <button key={ex.id} onClick={() => handleAdd(ex.id)}
             style={{
-              width: '100%', textAlign: 'left', padding: '0.75rem',
+              width: '100%', textAlign: 'start', padding: '0.75rem',
               borderBottom: '1px solid rgba(0,240,255,0.1)', color: 'var(--color-text)',
             }}>
-            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{ex.name}</div>
+            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{exName}</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{ex.category} · {ex.muscleGroup}</div>
           </button>
-        ))}
+        );
+        })}
       </div>
     </ModalWrapper>
   );
@@ -437,7 +444,7 @@ const ChecklistPhase = ({ title, items, onComplete }: { title: string, items: st
         })}
       </div>
       <button onClick={onComplete} className="btn-primary" style={{ width: '100%', padding: '1rem' }}>
-        {t('workout.proceed')} <ChevronRight size={18} style={{ marginLeft: 4 }} />
+        {t('workout.proceed')} <ChevronRight size={18} style={{ marginInlineStart: 4 }} />
       </button>
     </div>
   );
@@ -536,12 +543,13 @@ const WorkoutPlayer = () => {
           const def = allEx.find(e => e.id === ex.exerciseId) || allEx[0];
           const isCollapsed = collapsed[ex.exerciseId];
           const completedSets = ex.sets.filter(s => s.completed).length;
+          const exName = useLanguageStore.getState().lang === 'ar' && def.nameAr ? def.nameAr : def.name;
           return (
             <div key={ex.exerciseId} className="glass-card animate-fade-up" style={{ marginBottom: '1rem', animationDelay: `${idx * 0.05}s` }}>
               <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isCollapsed ? 'none' : '1px solid rgba(0,240,255,0.08)' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1rem' }}>{def.name}</span>
+                    <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1rem' }}>{exName}</span>
                     {def.isRehab && <span className="tag-rehab">REHAB</span>}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
@@ -574,7 +582,7 @@ const WorkoutPlayer = () => {
                       <input type="number" value={set.reps || ''} onChange={e => updateSet(ex.exerciseId, set.setNumber, { reps: parseFloat(e.target.value)||0 })} style={{ textAlign: 'center' }} />
                       <div style={{ position: 'relative' }}>
                         <input type="number" min="1" max="10" value={set.rpe || ''} onChange={e => updateSet(ex.exerciseId, set.setNumber, { rpe: parseFloat(e.target.value)||0 })} style={{ textAlign: 'center', width: '100%' }} />
-                        {set.rpe >= 6 && <span style={{ position: 'absolute', bottom: -12, left: 0, right: 0, textAlign: 'center', fontSize: '0.5rem', color: 'var(--magenta)', whiteSpace: 'nowrap' }}>{getRpeLabel(set.rpe)}</span>}
+                        {set.rpe >= 6 && <span style={{ position: 'absolute', bottom: -12, insetInlineStart: 0, insetInlineEnd: 0, textAlign: 'center', fontSize: '0.5rem', color: 'var(--magenta)', whiteSpace: 'nowrap' }}>{getRpeLabel(set.rpe)}</span>}
                       </div>
                       <button onClick={() => handleComplete(ex.exerciseId, set.setNumber)} style={{ height: 40, borderRadius: 'var(--radius-md)', background: set.completed ? 'var(--color-success)' : 'rgba(0,240,255,0.08)', border: `1px solid ${set.completed ? 'var(--color-success)' : 'rgba(0,240,255,0.2)'}`, color: set.completed ? '#000' : 'var(--cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Check size={18} strokeWidth={3} />
@@ -625,7 +633,7 @@ const Workout = () => {
           <h1 className="display" style={{ fontSize: '2.5rem' }}>{t('workout.title')} <span className="neon-cyan">{t('workout.session')}</span></h1>
         </div>
         <button onClick={() => setModalType('create')} className="btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)' }}>
-          <Plus size={14} style={{ marginRight: 4 }} /> Custom Ex
+          <Plus size={14} style={{ marginInlineEnd: 4 }} /> Custom Ex
         </button>
       </header>
 

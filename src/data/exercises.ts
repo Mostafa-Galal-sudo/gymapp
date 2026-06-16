@@ -1,6 +1,7 @@
 export interface Exercise {
   id: string;
   name: string;
+  nameAr?: string;
   category: 'Push' | 'Pull' | 'Legs' | 'Neck' | 'Hand/Grip' | 'Face' | 'Eye' | 'Breathing';
   muscleGroup: string;
   isRehab?: boolean;
@@ -17,10 +18,10 @@ const defaultPlaceholders = {
 };
 
 export const EXERCISE_DATABASE: Exercise[] = [
-  { id: 'bench_press', name: 'Barbell Bench Press', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
-  { id: 'incline_bb_press', name: 'Incline Barbell Bench Press', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
-  { id: 'decline_bb_press', name: 'Decline Barbell Bench Press', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
-  { id: 'db_bench', name: 'Dumbbell Bench Press', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
+  { id: 'bench_press', name: 'Barbell Bench Press', nameAr: 'ضغط الصدر بالبار', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
+  { id: 'incline_bb_press', name: 'Incline Barbell Bench Press', nameAr: 'ضغط الصدر العلوي بالبار', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
+  { id: 'decline_bb_press', name: 'Decline Barbell Bench Press', nameAr: 'ضغط الصدر السفلي بالبار', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
+  { id: 'db_bench', name: 'Dumbbell Bench Press', nameAr: 'ضغط الصدر بالدمبلز', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
   { id: 'incline_db_press', name: 'Incline Dumbbell Press', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
   { id: 'decline_db_press', name: 'Decline Dumbbell Press', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
   { id: 'cable_fly', name: 'Cable Fly (High to Low)', category: 'Push', muscleGroup: 'Chest', ...defaultPlaceholders },
