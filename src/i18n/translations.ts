@@ -37,6 +37,7 @@ export const translations = {
     'common.items':     'items',
     'common.kcal':      'kcal',
     'common.kg':        'kg',
+    'common.today':     'Today',
 
     // ── Auth ─────────────────────────────────────────────────────
     'auth.welcome':        'Welcome',
@@ -171,6 +172,8 @@ export const translations = {
     'nutrition.cat_international':'International',
     'nutrition.cat_raw':          'Raw',
     'nutrition.cat_supplement':   'Supplement',
+    'nutrition.scan_barcode':     'Scan Barcode',
+    'nutrition.stop_scan':        'Stop Scan',
 
     // ── Profile ──────────────────────────────────────────────────
     'profile.title':         'PROFILE',
@@ -219,6 +222,21 @@ export const translations = {
     'profile.recovering':    'Recovering',
     'profile.active':        'Active',
     'profile.history':       'Workout Log',
+    'profile.bmi_calculator':'BMI & Nutrition Targets',
+    'profile.bmi':           'BMI',
+    'profile.underweight':   'Underweight',
+    'profile.normal':        'Normal',
+    'profile.overweight':    'Overweight',
+    'profile.obese':         'Obese',
+    'profile.macro_targets': 'Macro Targets',
+    'profile.micro_targets': 'Micro & Mineral Targets',
+    'profile.sync_health':   'Sync Health Data',
+    'profile.syncing':       'Syncing...',
+    'profile.last_sync':     'Last sync',
+    'profile.change_photo':  'Change Photo',
+    'profile.gender':        'Gender',
+    'profile.male':          'Male',
+    'profile.female':        'Female',
 
     // ── Muscle Map ───────────────────────────────────────────────
     'muscle.title':          'MUSCLE MAP',
@@ -295,6 +313,7 @@ export const translations = {
     'common.items':     'عناصر',
     'common.kcal':      'سعر',
     'common.kg':        'كجم',
+    'common.today':     'اليوم',
 
     // ── Auth ─────────────────────────────────────────────────────
     'auth.welcome':        'أهلاً بك',
@@ -429,6 +448,8 @@ export const translations = {
     'nutrition.cat_international':'عالمي',
     'nutrition.cat_raw':          'خام',
     'nutrition.cat_supplement':   'مكمل',
+    'nutrition.scan_barcode':     'مسح الباركود',
+    'nutrition.stop_scan':        'إيقاف المسح',
 
     // ── Profile ──────────────────────────────────────────────────
     'profile.title':         'الملف الشخصي',
@@ -477,6 +498,21 @@ export const translations = {
     'profile.recovering':    'يتعافى',
     'profile.active':        'نشط',
     'profile.history':       'سجل التمارين',
+    'profile.bmi_calculator':'حاسبة مؤشر كتلة الجسم وأهداف التغذية',
+    'profile.bmi':           'مؤشر كتلة الجسم',
+    'profile.underweight':   'نقص الوزن',
+    'profile.normal':        'طبيعي',
+    'profile.overweight':    'زيادة الوزن',
+    'profile.obese':         'سمنة',
+    'profile.macro_targets': 'أهداف المغذيات الكبرى',
+    'profile.micro_targets': 'أهداف الفيتامينات والمعادن',
+    'profile.sync_health':   'مزامنة البيانات',
+    'profile.syncing':       'جاري المزامنة...',
+    'profile.last_sync':     'آخر مزامنة',
+    'profile.change_photo':  'تغيير الصورة',
+    'profile.gender':        'الجنس',
+    'profile.male':          'ذكر',
+    'profile.female':        'أنثى',
 
     // ── Muscle Map ───────────────────────────────────────────────
     'muscle.title':          'خريطة العضلات',

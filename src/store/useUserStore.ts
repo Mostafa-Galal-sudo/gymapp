@@ -17,6 +17,8 @@ export interface UserProfile {
   level: string;
   goals: string[];
   profilePhoto?: string;
+  activityLevel?: 'Sedentary' | 'Light' | 'Moderate' | 'Active';
+  gender?: 'male' | 'female';
 }
 
 export interface WeightEntry {
@@ -53,11 +55,13 @@ const DEFAULT_SUPPLEMENTS: Supplement[] = [
 
 const DEFAULT_PROFILE: UserProfile = {
   name: 'User',
-  age: 22,
-  weight: 78,
-  height: 177,
-  level: 'Intermediate',
-  goals: ['Strength', 'Athletic', 'Aesthetics'],
+  age: 25,
+  weight: 70,
+  height: 175,
+  level: 'Beginner',
+  goals: ['General Fitness'],
+  activityLevel: 'Moderate',
+  gender: 'male',
 };
 
 const saveToDb = async (state: UserState) => {

@@ -40,7 +40,7 @@ Provide highly tailored, positive, actionable, science-based fitness and health 
 Keep responses concise, formatted cleanly in Markdown, and easy to read. Respond in the language used in the prompt or context (support both English and Arabic).`;
 
     const response = await getAI().models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.0-flash",
       contents: [
         { text: `User Profile & Context: ${JSON.stringify(context || {})}` },
         { text: prompt }
@@ -76,7 +76,7 @@ app.post("/api/ai/nutrition", async (req, res) => {
     };
 
     const response = await getAI().models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.0-flash",
       contents: { parts: [imagePart, textPart] },
       config: {
         responseMimeType: "application/json",
@@ -115,7 +115,7 @@ app.post("/api/ai/workout-analysis", async (req, res) => {
     const systemInstruction = `You are OmniBody Workout Analyst. You analyze a finished workout session and provide biomechanical feedback, performance insights, sets/reps breakdown, and fatigue-management recommendations. Formulate your comments as brief, professional bullet points in clean Markdown. Translate response into user's preferred language (English or Arabic).`;
 
     const response = await getAI().models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.0-flash",
       contents: [
         { text: `User Profile: ${JSON.stringify(context || {})}` },
         { text: `Workout Session Details to analyze: ${JSON.stringify(workoutDetails || {})}` }
@@ -142,7 +142,7 @@ Provide:
 Formulate the response in clean, concise Markdown, utilizing sections, and support both English and Arabic.`;
 
     const response = await getAI().models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.0-flash",
       contents: [
         { text: `User Profile: ${JSON.stringify(userProfile || {})}` },
         { text: `Recent Logs & History: ${JSON.stringify(historyLogs || [])}` }

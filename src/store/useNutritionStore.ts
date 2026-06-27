@@ -3,6 +3,7 @@ import { startOfDay } from 'date-fns';
 import db from '../db/db';
 import { useUserStore } from './useUserStore';
 import { FOOD_DATABASE } from '../data/foods';
+import { scheduleWaterReminders, cancelWaterReminders } from '../services/notificationService';
 
 export interface LoggedFood {
   foodId: string;
@@ -41,7 +42,11 @@ export interface NutritionDay {
 
 interface NutritionState {
   history: Record<number, NutritionDay>; // Keyed by start of day timestamp
-  getTargets: (weight: number) => { calories: number; protein: number; carbs: number; fats: number; fiber: number; water: number };
+  getTargets: (weight?: number) => { 
+    calories: number; protein: number; carbs: number; fats: number; fiber: number; water: number;
+    sodium: number; potassium: number; iron: number; calcium: number;
+    vitaminA: number; vitaminC: number; vitaminD: number; vitaminB12: number;
+  };
   loadUserHistory: (userId: string) => Promise<void>;
   addFood: (date: number, mealType: string, food: LoggedFood) => Promise<void>;
   removeFood: (date: number, mealId: string, foodId: string) => Promise<void>;
@@ -77,16 +82,20 @@ export const useNutritionStore = create<NutritionState>()(
       const weight = weightParam || profile.weight || 78;
       const height = profile.height || 177;
       const age = profile.age || 22;
-      const level = profile.level || 'Intermediate';
       const goals = profile.goals || [];
+      const activityLevel = profile.activityLevel || 'Moderate';
 
       const isFemale = goals.some(g => g.toLowerCase().includes('female')) || (profile as any).gender === 'female';
       const s = isFemale ? -161 : 5;
       const bmr = 10 * weight + 6.25 * height - 5 * age + s;
 
-      let multiplier = 1.55;
-      if (level === 'Beginner') multiplier = 1.375;
-      else if (level === 'Advanced') multiplier = 1.725;
+      const multiplierMap: Record<string, number> = {
+        'Sedentary': 1.2,
+        'Light': 1.375,
+        'Moderate': 1.55,
+        'Active': 1.725,
+      };
+      const multiplier = multiplierMap[activityLevel] ?? 1.55;
 
       const tdee = bmr * multiplier;
 
@@ -99,15 +108,15 @@ export const useNutritionStore = create<NutritionState>()(
 
       calories = Math.round(calories);
 
-      const proteinG = Math.round(weight * 2.2);
+      const proteinG = Math.round(weight * 2.0);
       const proteinKcal = proteinG * 4;
-      const fatsKcal = calories * 0.25;
-      const fatsG = Math.round(fatsKcal / 9);
+      const fatsG = Math.round(weight * 1.0);
+      const fatsKcal = fatsG * 9;
       const remainingKcal = calories - proteinKcal - fatsKcal;
       const carbsG = Math.round(Math.max(50, remainingKcal / 4));
 
-      const fiberG = Math.round((calories / 1000) * 14);
-      const waterMl = Math.round(weight * 35 + 1000);
+      const fiberG = 30;
+      const waterMl = Math.round(weight * 35);
 
       return {
         calories,
@@ -115,9 +124,18 @@ export const useNutritionStore = create<NutritionState>()(
         carbs: carbsG,
         fats: fatsG,
         fiber: fiberG,
-        water: waterMl
+        water: waterMl,
+        sodium: 2300,        // mg (general upper limit / target)
+        potassium: 3400,     // mg
+        iron: isFemale ? 18 : 8, // mg
+        calcium: 1000,       // mg
+        vitaminA: isFemale ? 700 : 900, // mcg
+        vitaminC: isFemale ? 75 : 90,   // mg
+        vitaminD: 600,       // IU
+        vitaminB12: 2.4      // mcg
       };
     },
+
 
     loadUserHistory: async (userId: string) => {
       const logs = await db.daily_logs.where('userId').equals(userId).toArray();
@@ -258,6 +276,16 @@ export const useNutritionStore = create<NutritionState>()(
 
       const activeUserId = useUserStore.getState().activeUserId;
       if (activeUserId) await saveToDb(activeUserId, today, newLog);
+
+      // Handle water reminders if logging for today
+      if (today === startOfDay(new Date()).getTime()) {
+        const target = get().getTargets(useUserStore.getState().profile.weight).water;
+        if (newLog.waterMl >= target) {
+          cancelWaterReminders();
+        } else {
+          scheduleWaterReminders(target - newLog.waterMl);
+        }
+      }
     },
 
     toggleSupplement: async (date, supId, doseIndex) => {
@@ -332,6 +360,11 @@ export const useNutritionStore = create<NutritionState>()(
       
       const activeUserId = useUserStore.getState().activeUserId;
       if (activeUserId) await saveToDb(activeUserId, today, newLog);
+
+      if (today === startOfDay(new Date()).getTime()) {
+        const target = get().getTargets(useUserStore.getState().profile.weight).water;
+        scheduleWaterReminders(target);
+      }
     },
 
     resetSupplements: async (date) => {

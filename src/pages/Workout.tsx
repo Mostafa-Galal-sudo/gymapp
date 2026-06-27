@@ -466,6 +466,10 @@ const WorkoutPlayer = () => {
   const [modalType, setModalType] = useState<'notes' | 'swap' | 'plate' | 'history' | 'create' | 'add' | null>(null);
   const [modalEx, setModalEx] = useState<any>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [activeExIdx, setActiveExIdx] = useState(0);
+  const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
+  const [slideKey, setSlideKey] = useState(0);
+  const touchStartX = useRef(0);
   const removeExercise = useWorkoutStore(s => s.removeExerciseFromSession);
 
   useEffect(() => {
@@ -479,6 +483,28 @@ const WorkoutPlayer = () => {
   if (!activeSession) return null;
 
   const allEx = getAllExercises();
+  const exCount = activeSession.exercises.length;
+  const safeIdx = Math.min(activeExIdx, Math.max(0, exCount - 1));
+
+  const goPrev = () => {
+    if (safeIdx <= 0) return;
+    setSlideDir('right');
+    setSlideKey(k => k + 1);
+    setActiveExIdx(safeIdx - 1);
+  };
+  const goNext = () => {
+    if (safeIdx >= exCount - 1) return;
+    setSlideDir('left');
+    setSlideKey(k => k + 1);
+    setActiveExIdx(safeIdx + 1);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (dx < -50) goNext();
+    else if (dx > 50) goPrev();
+  };
 
   if (activeSession.phase === 'warmup') {
     const items = [
@@ -540,13 +566,45 @@ const WorkoutPlayer = () => {
           {t('workout.open_calc')}
         </button>
 
+        {/* Exercise navigation: prev / dots / next */}
+        {exCount > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', gap: '0.5rem' }}>
+            <button onClick={goPrev} disabled={safeIdx === 0}
+              style={{ width: 38, height: 38, borderRadius: '50%', border: '1px solid rgba(0,240,255,0.2)', background: 'rgba(0,240,255,0.06)', color: safeIdx === 0 ? 'var(--color-text-muted)' : 'var(--cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: safeIdx === 0 ? 'not-allowed' : 'pointer', opacity: safeIdx === 0 ? 0.4 : 1 }}>
+              <ChevronRight size={18} style={{ transform: 'rotate(180deg)' }} />
+            </button>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flex: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {activeSession.exercises.map((exd, i) => {
+                const done = exd.sets.every(s => s.completed);
+                return (
+                  <button key={i} onClick={() => { setSlideDir(i > safeIdx ? 'left' : 'right'); setSlideKey(k => k+1); setActiveExIdx(i); }}
+                    style={{ width: i === safeIdx ? 24 : 8, height: 8, borderRadius: 4, background: done ? 'var(--color-success)' : i === safeIdx ? 'var(--cyan)' : 'rgba(0,240,255,0.2)', transition: 'all 0.3s', border: 'none', padding: 0, cursor: 'pointer' }}
+                  />
+                );
+              })}
+            </div>
+            <button onClick={goNext} disabled={safeIdx >= exCount - 1}
+              style={{ width: 38, height: 38, borderRadius: '50%', border: '1px solid rgba(0,240,255,0.2)', background: 'rgba(0,240,255,0.06)', color: safeIdx >= exCount - 1 ? 'var(--color-text-muted)' : 'var(--cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: safeIdx >= exCount - 1 ? 'not-allowed' : 'pointer', opacity: safeIdx >= exCount - 1 ? 0.4 : 1 }}>
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
+
+        {/* Active exercise — focused card with swipe support */}
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          style={{ overflow: 'hidden' }}
+        >
         {activeSession.exercises.map((ex, idx) => {
+          if (idx !== safeIdx) return null;
           const def = allEx.find(e => e.id === ex.exerciseId) || allEx[0];
           const isCollapsed = collapsed[ex.exerciseId];
           const completedSets = ex.sets.filter(s => s.completed).length;
           const exName = useLanguageStore.getState().lang === 'ar' && def.nameAr ? def.nameAr : def.name;
+          const slideClass = slideDir === 'left' ? 'exercise-slide-in-left' : 'exercise-slide-in-right';
           return (
-            <div key={ex.exerciseId} className="glass-card animate-fade-up" style={{ marginBottom: '1rem', animationDelay: `${idx * 0.05}s` }}>
+            <div key={`${ex.exerciseId}-${slideKey}`} className={`glass-card ${slideClass}`} style={{ marginBottom: '1rem' }}>
               <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isCollapsed ? 'none' : '1px solid rgba(0,240,255,0.08)' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -554,7 +612,7 @@ const WorkoutPlayer = () => {
                     {def.isRehab && <span className="tag-rehab">REHAB</span>}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
-                    {completedSets}/{ex.sets.length} sets completed
+                    {completedSets}/{ex.sets.length} sets · Ex {safeIdx + 1}/{exCount}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.2rem' }}>
@@ -596,6 +654,28 @@ const WorkoutPlayer = () => {
             </div>
           );
         })}
+        </div>
+
+        {/* All exercises mini-list (collapsed overview) */}
+        {exCount > 1 && (
+          <div style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
+            <div className="section-label" style={{ marginBottom: '0.5rem' }}>All Exercises</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+              {activeSession.exercises.map((ex, i) => {
+                const def = allEx.find(e => e.id === ex.exerciseId) || allEx[0];
+                const done = ex.sets.every(s => s.completed);
+                const exName = useLanguageStore.getState().lang === 'ar' && def.nameAr ? def.nameAr : def.name;
+                return (
+                  <button key={ex.exerciseId} onClick={() => { setSlideDir(i > safeIdx ? 'left' : 'right'); setSlideKey(k => k+1); setActiveExIdx(i); }}
+                    style={{ textAlign: 'start', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', background: i === safeIdx ? 'rgba(0,240,255,0.1)' : 'rgba(255,255,255,0.02)', border: `1px solid ${i === safeIdx ? 'rgba(0,240,255,0.3)' : 'rgba(255,255,255,0.05)'}`, color: i === safeIdx ? 'var(--cyan)' : done ? 'var(--color-success)' : 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>{i + 1}. {exName}</span>
+                    {done && <Check size={14} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <button onClick={() => setModalType('add')} className="btn-secondary" style={{ width: '100%', padding: '1rem', marginTop: '1rem', borderStyle: 'dashed' }}>
           + {t('workout.add_exercise') || 'Add Exercise'}
