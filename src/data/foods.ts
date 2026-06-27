@@ -22,6 +22,7 @@ export interface Food {
   vitaminC?: number;  // mg
   vitaminD?: number;  // IU
   vitaminB12?: number; // mcg
+  barcode?: string;    // EAN-13 or UPC barcode
 }
 
 export const STATIC_FOOD_DATABASE: Food[] = [
@@ -2169,11 +2170,59 @@ function generateDynamicIngredients(): Food[] {
 const DYNAMIC_FOODS_LIST = generateDynamicFoods();
 const DYNAMIC_INGREDIENTS_LIST = generateDynamicIngredients();
 
-// Export the absolutely massive database (Exceeds 2000 total verified unique items)
+
+// ==========================================
+// NEW EXPANDED FOODS (35 items, Phase 2)
+// ==========================================
+const NEW_FOODS: Food[] = [
+  // --- International ---
+  { id: 'int_avocado_toast', name: 'Avocado Toast', nameAr: 'توست أفوكادو', category: 'International', calories: 290, protein: 8, carbs: 28, fats: 18, servingSize: 200, servingUnit: 'g', fiber: 7, sodium: 310, potassium: 580, iron: 2.1, calcium: 60, vitaminC: 12, vitaminA: 90, barcode: '0000000000101' },
+  { id: 'int_chicken_caesar', name: 'Chicken Caesar Salad', nameAr: 'سلطة سيزر بالدجاج', category: 'International', calories: 380, protein: 32, carbs: 14, fats: 22, servingSize: 300, servingUnit: 'g', fiber: 3, sodium: 780, potassium: 510, iron: 2.5, calcium: 180, vitaminA: 350, vitaminC: 18 },
+  { id: 'int_greek_yogurt_parfait', name: 'Greek Yogurt Parfait', nameAr: 'بارفيه زبادي يوناني', category: 'International', calories: 260, protein: 18, carbs: 35, fats: 5, servingSize: 250, servingUnit: 'g', fiber: 3, sodium: 90, potassium: 420, calcium: 220, vitaminB12: 1.2 },
+  { id: 'int_salmon_sushi', name: 'Salmon Sushi Roll (8 pcs)', nameAr: 'سوشي سلمون', category: 'International', calories: 320, protein: 18, carbs: 48, fats: 8, servingSize: 240, servingUnit: 'g', fiber: 2, sodium: 640, potassium: 320, iron: 1.8, calcium: 40, vitaminD: 180, vitaminB12: 3.2 },
+  { id: 'int_beef_burger', name: 'Beef Burger (No Bun)', nameAr: 'برجر لحم بقري بدون خبز', category: 'International', calories: 295, protein: 28, carbs: 2, fats: 20, servingSize: 150, servingUnit: 'g', fiber: 0, sodium: 380, potassium: 420, iron: 3.2, calcium: 18, vitaminB12: 2.8 },
+  { id: 'int_pasta_bolognese', name: 'Pasta Bolognese', nameAr: 'باستا بولونيز', category: 'International', calories: 510, protein: 24, carbs: 68, fats: 14, servingSize: 350, servingUnit: 'g', fiber: 4, sodium: 490, potassium: 600, iron: 3.5, calcium: 55, vitaminA: 280, vitaminC: 8 },
+  { id: 'int_thai_green_curry', name: 'Thai Green Curry with Rice', nameAr: 'كاري تايلاندي أخضر مع أرز', category: 'International', calories: 490, protein: 22, carbs: 60, fats: 18, servingSize: 400, servingUnit: 'g', fiber: 5, sodium: 720, potassium: 540, iron: 3.8, calcium: 80, vitaminC: 30, vitaminA: 420 },
+  { id: 'int_oatmeal_berries', name: 'Oatmeal with Mixed Berries', nameAr: 'الشوفان مع التوت المشكل', category: 'International', calories: 310, protein: 10, carbs: 54, fats: 6, servingSize: 300, servingUnit: 'g', fiber: 8, sugar: 14, sodium: 120, potassium: 380, iron: 2.8, calcium: 90, vitaminC: 18, barcode: '0000000000102' },
+  { id: 'int_steak_asparagus', name: 'Grilled Steak with Asparagus', nameAr: 'ستيك مشوي مع الهليون', category: 'International', calories: 420, protein: 45, carbs: 8, fats: 22, servingSize: 300, servingUnit: 'g', fiber: 3, sodium: 350, potassium: 780, iron: 5.2, calcium: 45, vitaminB12: 4.5, vitaminC: 14 },
+
+  // --- Local / Middle Eastern ---
+  { id: 'loc_shawarma_wrap', name: 'Chicken Shawarma Wrap', nameAr: 'ساندوتش شاورما دجاج', category: 'Local', calories: 480, protein: 30, carbs: 50, fats: 16, servingSize: 280, servingUnit: 'g', fiber: 4, sodium: 820, potassium: 490, iron: 3.1, calcium: 70, vitaminA: 180, vitaminC: 6 },
+  { id: 'loc_falafel_wrap', name: 'Falafel Wrap', nameAr: 'ساندوتش فلافل', category: 'Local', calories: 410, protein: 16, carbs: 55, fats: 15, servingSize: 260, servingUnit: 'g', fiber: 8, sodium: 680, potassium: 540, iron: 4.2, calcium: 85, vitaminC: 8 },
+  { id: 'loc_mahshi_kousa', name: 'Stuffed Zucchini (Mahshi Kousa)', nameAr: 'محشي كوسا', category: 'Local', calories: 340, protein: 15, carbs: 42, fats: 12, servingSize: 300, servingUnit: 'g', fiber: 6, sodium: 560, potassium: 680, iron: 2.9, calcium: 60, vitaminA: 320, vitaminC: 22 },
+  { id: 'loc_feteer_meshaltet', name: 'Feteer Meshaltet (Egyptian Pastry)', nameAr: 'فطير مشلتت', category: 'Local', calories: 520, protein: 10, carbs: 65, fats: 24, servingSize: 200, servingUnit: 'g', fiber: 2, sugar: 4, sodium: 420, potassium: 120, calcium: 40 },
+  { id: 'loc_hawawshi', name: 'Hawawshi (Egyptian Meat Pastry)', nameAr: 'حواوشي', category: 'Local', calories: 580, protein: 28, carbs: 48, fats: 28, servingSize: 260, servingUnit: 'g', fiber: 3, sodium: 780, potassium: 380, iron: 3.8, calcium: 45 },
+  { id: 'loc_om_ali', name: 'Om Ali (Egyptian Bread Pudding)', nameAr: 'أم علي', category: 'Local', calories: 450, protein: 10, carbs: 58, fats: 20, servingSize: 250, servingUnit: 'g', fiber: 2, sugar: 28, sodium: 180, potassium: 280, calcium: 140, vitaminD: 40 },
+  { id: 'loc_mulukhiyah_chicken', name: 'Mulukhiyah with Chicken', nameAr: 'ملوخية بالدجاج', category: 'Local', calories: 320, protein: 28, carbs: 18, fats: 14, servingSize: 350, servingUnit: 'g', fiber: 5, sodium: 520, potassium: 680, iron: 4.5, calcium: 120, vitaminA: 680, vitaminC: 28, vitaminK: 600 } as any,
+  { id: 'loc_semit', name: 'Egyptian Sesame Bread Ring (Semit)', nameAr: 'سميط', category: 'Local', calories: 280, protein: 9, carbs: 50, fats: 6, servingSize: 120, servingUnit: 'g', fiber: 3, sodium: 280, potassium: 180, iron: 2.8, calcium: 120 },
+  { id: 'loc_ful_with_egg', name: 'Ful Medames with Egg', nameAr: 'فول بالبيض', category: 'Local', calories: 390, protein: 22, carbs: 42, fats: 14, servingSize: 300, servingUnit: 'g', fiber: 12, sodium: 460, potassium: 780, iron: 5.8, calcium: 90, vitaminC: 10 },
+
+  // --- Raw Ingredients ---
+  { id: 'raw_quinoa_cooked', name: 'Cooked Quinoa', nameAr: 'كينوا مطبوخة', category: 'Raw', calories: 120, protein: 4.4, carbs: 21, fats: 1.9, servingSize: 100, servingUnit: 'g', fiber: 2.8, sodium: 7, potassium: 172, iron: 1.5, calcium: 17, barcode: '0000000000201' },
+  { id: 'raw_edamame', name: 'Edamame (Shelled)', nameAr: 'إيدامامي', category: 'Raw', calories: 121, protein: 11, carbs: 9, fats: 5.2, servingSize: 100, servingUnit: 'g', fiber: 5.2, sodium: 6, potassium: 436, iron: 2.3, calcium: 63, vitaminC: 6.1, vitaminK: 26 } as any,
+  { id: 'raw_sweet_potato', name: 'Sweet Potato', nameAr: 'بطاطا حلوة', category: 'Raw', calories: 86, protein: 1.6, carbs: 20, fats: 0.1, servingSize: 100, servingUnit: 'g', fiber: 3, sugar: 4.2, sodium: 55, potassium: 337, iron: 0.6, calcium: 30, vitaminA: 709, vitaminC: 19.6, barcode: '0000000000202' },
+  { id: 'raw_blueberries', name: 'Blueberries', nameAr: 'توت أزرق', category: 'Raw', calories: 57, protein: 0.7, carbs: 14, fats: 0.3, servingSize: 100, servingUnit: 'g', fiber: 2.4, sugar: 10, sodium: 1, potassium: 77, calcium: 6, vitaminC: 9.7, vitaminK: 19 } as any,
+  { id: 'raw_kale', name: 'Kale (Raw)', nameAr: 'كيل', category: 'Raw', calories: 35, protein: 2.9, carbs: 4.4, fats: 0.5, servingSize: 100, servingUnit: 'g', fiber: 4.1, sodium: 38, potassium: 348, iron: 1.5, calcium: 254, vitaminA: 769, vitaminC: 93, vitaminK: 817 } as any,
+  { id: 'raw_tempeh', name: 'Tempeh', nameAr: 'تمبيه', category: 'Raw', calories: 193, protein: 19, carbs: 9, fats: 11, servingSize: 100, servingUnit: 'g', fiber: 0, sodium: 9, potassium: 401, iron: 2.7, calcium: 111, vitaminB12: 0 },
+  { id: 'raw_chia_seeds', name: 'Chia Seeds', nameAr: 'بذور الشيا', category: 'Raw', calories: 486, protein: 17, carbs: 42, fats: 31, servingSize: 30, servingUnit: 'g', fiber: 10, sodium: 16, potassium: 407, iron: 2.4, calcium: 177, vitaminC: 1.6, barcode: '0000000000203' },
+  { id: 'raw_lentils_cooked', name: 'Red Lentils (Cooked)', nameAr: 'عدس أحمر مطبوخ', category: 'Raw', calories: 116, protein: 9, carbs: 20, fats: 0.4, servingSize: 100, servingUnit: 'g', fiber: 7.9, sodium: 2, potassium: 369, iron: 3.3, calcium: 19, vitaminC: 1.5 },
+
+  // --- Supplements ---
+  { id: 'supp_whey_isolate', name: 'Whey Protein Isolate Shake', nameAr: 'بروتين واي آيزوليت', category: 'Supplement', calories: 115, protein: 25, carbs: 1, fats: 0.5, servingSize: 30, servingUnit: 'g', sodium: 60, calcium: 110, vitaminD: 0, vitaminB12: 0.8, barcode: '0000000000301' },
+  { id: 'supp_casein_shake', name: 'Casein Protein Shake', nameAr: 'بروتين كازين', category: 'Supplement', calories: 120, protein: 24, carbs: 3, fats: 1, servingSize: 33, servingUnit: 'g', sodium: 140, calcium: 330, vitaminD: 10 },
+  { id: 'supp_mass_gainer', name: 'Mass Gainer Shake (2 scoops)', nameAr: 'مكمل زيادة الكتلة', category: 'Supplement', calories: 650, protein: 35, carbs: 110, fats: 8, servingSize: 180, servingUnit: 'g', sodium: 280, potassium: 520, calcium: 400, vitaminD: 200, vitaminB12: 2.4, barcode: '0000000000302' },
+  { id: 'supp_bcaa_drink', name: 'BCAA Drink (2 scoops)', nameAr: 'مشروب أحماض أمينية BCAA', category: 'Supplement', calories: 25, protein: 5, carbs: 1, fats: 0, servingSize: 14, servingUnit: 'g', sodium: 20, potassium: 15 },
+  { id: 'supp_pre_workout', name: 'Pre-Workout Powder (1 scoop)', nameAr: 'مكمل ما قبل التمرين', category: 'Supplement', calories: 30, protein: 0, carbs: 6, fats: 0, servingSize: 10, servingUnit: 'g', sodium: 180, potassium: 200 },
+  { id: 'supp_fish_oil', name: 'Fish Oil (2 softgels)', nameAr: 'زيت السمك', category: 'Supplement', calories: 20, protein: 0, carbs: 0, fats: 2, servingSize: 2, servingUnit: 'caps', sodium: 0, vitaminD: 40 },
+  { id: 'supp_vitamin_d3', name: 'Vitamin D3 (5000 IU)', nameAr: 'فيتامين د3', category: 'Supplement', calories: 5, protein: 0, carbs: 0, fats: 0.5, servingSize: 1, servingUnit: 'cap', sodium: 0, vitaminD: 5000 },
+  { id: 'supp_zinc_magnesium', name: 'Zinc & Magnesium (ZMA)', nameAr: 'زنك وماغنيسيوم ZMA', category: 'Supplement', calories: 5, protein: 0, carbs: 0, fats: 0, servingSize: 3, servingUnit: 'caps', sodium: 0, calcium: 30 },
+];
+
 export const FOOD_DATABASE: Food[] = [
   ...STATIC_FOOD_DATABASE,
   ...DYNAMIC_FOODS_LIST,
-  ...DYNAMIC_INGREDIENTS_LIST
+  ...DYNAMIC_INGREDIENTS_LIST,
+  ...NEW_FOODS,
 ];
 
 // Simple verification console message to confirm requirements are perfectly met

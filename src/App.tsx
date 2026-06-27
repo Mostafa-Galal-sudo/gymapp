@@ -54,11 +54,19 @@ function AppRouter() {
 function App() {
   const lang = useLanguageStore(s => s.lang);
   const isAuthenticated = useUserStore(s => s.isAuthenticated);
+  const loadUser = useUserStore(s => s.loadUser);
 
   useEffect(() => {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
   }, [lang]);
+
+  useEffect(() => {
+    const storedId = localStorage.getItem('omni_active_user');
+    if (storedId) {
+      loadUser(storedId);
+    }
+  }, [loadUser]);
 
   return (
     <MigrationGate>

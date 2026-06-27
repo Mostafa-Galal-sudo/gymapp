@@ -55,6 +55,7 @@ interface WorkoutState {
   scheduleSession: (date: string, type: string, exerciseIds: string[]) => void;
   removeScheduledSession: (id: string) => void;
   updateScheduledSessionDate: (id: string, newDate: string) => void;
+  updateHistoricalSession: (sessionId: string, updatedSession: Partial<WorkoutSession>) => Promise<void>;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -253,5 +254,20 @@ export const useWorkoutStore = create<WorkoutState>()((set, get) => ({
       }
     }
     return 0; // Default if no history
+  },
+
+  updateHistoricalSession: async (sessionId, updatedSession) => {
+    const state = get();
+    const newHistory = state.history.map(s => {
+      if (s.sessionId !== sessionId) return s;
+      return { ...s, ...updatedSession } as WorkoutSession;
+    });
+    set({ history: newHistory });
+
+    const activeUserId = useUserStore.getState().activeUserId || 'default_user';
+    const foundSession = newHistory.find(s => s.sessionId === sessionId);
+    if (foundSession) {
+      await db.workouts.put({ ...foundSession, userId: activeUserId });
+    }
   }
 }));

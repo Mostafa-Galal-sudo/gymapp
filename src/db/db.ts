@@ -39,6 +39,22 @@ export interface DailyLogEntity {
   supplementsTaken: Record<string, boolean[]>; // supplementId -> boolean array of taken doses
 }
 
+export interface CustomFood {
+  id: string;
+  name: string;
+  nameAr: string;
+  category: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  fiber?: number;
+  sodium?: number;
+  potassium?: number;
+  servingSize?: number;
+  servingUnit?: string;
+}
+
 // Extend WorkoutSession and CustomExercise to include userId for the DB layer
 export type DBWorkoutSession = WorkoutSession & { userId: string };
 export type DBCustomExercise = CustomExercise & { userId: string };
@@ -49,6 +65,7 @@ const db = new Dexie('OmnibodyDB_V2') as Dexie & {
   workouts: EntityTable<DBWorkoutSession, 'sessionId'>;
   custom_exercises: EntityTable<DBCustomExercise, 'id'>;
   injuries: EntityTable<InjuryEntry, 'id'>;
+  custom_foods: EntityTable<CustomFood, 'id'>;
 };
 
 // Schema version 2 (V2)
@@ -58,6 +75,16 @@ db.version(2).stores({
   workouts: 'sessionId, userId, date, type, phase',
   custom_exercises: 'id, userId, name, category, muscleGroup',
   injuries: 'id, userId, bodyPart, status'
+});
+
+// Schema version 3 (V3)
+db.version(3).stores({
+  users: 'id',
+  daily_logs: 'id, userId, date, [userId+date]', 
+  workouts: 'sessionId, userId, date, type, phase',
+  custom_exercises: 'id, userId, name, category, muscleGroup',
+  injuries: 'id, userId, bodyPart, status',
+  custom_foods: 'id, name, category'
 });
 
 export default db;

@@ -6,7 +6,8 @@ import { useGamificationStore } from '../store/useGamificationStore';
 import { useNavigate } from 'react-router-dom';
 import {
   Zap, TrendingUp, AlertTriangle, Dumbbell, Droplet,
-  ChevronRight, Activity, Share2, Accessibility, Minus, Plus, Brain
+  ChevronRight, Activity, Share2, Accessibility, Minus, Plus, Brain,
+  Sparkles, Send, X, Loader2
 } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import html2canvas from 'html2canvas';
@@ -208,6 +209,8 @@ const VolumeCalculator = () => {
 const AICoachInsight = ({ history, acwr, totalCal, targetCal, sessionCount }: {
   history: any[]; acwr: number; totalCal: number; targetCal: number; sessionCount: number;
 }) => {
+  const t = useT();
+  const profile = useUserStore(s => s.profile);
   const lines: [string, string][] = [];     // [headline, subtitle]
 
   if (sessionCount === 0) {
@@ -245,57 +248,201 @@ const AICoachInsight = ({ history, acwr, totalCal, targetCal, sessionCount }: {
 
   const [headline, subtitle] = lines[0];
 
-  return (
-    <div
-      className="glass-card animate-fade-up"
-      style={{
-        padding: '1.25rem', marginBottom: '1.25rem',
-        background: 'linear-gradient(135deg, rgba(0,240,255,0.04) 0%, rgba(255,0,110,0.03) 100%)',
-        borderLeft: '3px solid var(--cyan)',
-        position: 'relative', overflow: 'hidden',
-      }}
-    >
-      {/* Decorative glow */}
-      <div style={{
-        position: 'absolute', top: -24, right: -24,
-        width: 90, height: 90,
-        background: 'var(--cyan-glow)', borderRadius: '50%',
-        filter: 'blur(24px)', pointerEvents: 'none', opacity: 0.5,
-      }} />
+  // Conversation States
+  const [showChat, setShowChat] = useState(false);
+  const [messages, setMessages] = useState<{ role: 'user' | 'coach'; text: string }[]>([
+    { role: 'coach', text: "مرحباً بك بطل! أنا مدربك الشخصي المدعوم بالذكاء الاصطناعي من OmniBody. كيف يمكنني مساعدتك في تحقيق أهدافك البدنية والغذائية اليوم؟" }
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-      {/* Label row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, loading]);
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || loading) return;
+    const userText = input;
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', text: userText }]);
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/ai/coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: userText,
+          context: {
+            profile,
+            history: history.slice(-5), // last 5 sessions for weight progression
+            acwr,
+            totalCal,
+            targetCal,
+            supplements: profile.supplements,
+            injuries: profile.injuries
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.response) {
+        setMessages(prev => [...prev, { role: 'coach', text: data.response }]);
+      } else {
+        setMessages(prev => [...prev, { role: 'coach', text: "عذراً بطل، لم أستطع فهم ذلك بسبب خطأ في الاتصال بالسيرفر. يرجى المحاولة لاحقاً." }]);
+      }
+    } catch (e) {
+      console.error(e);
+      setMessages(prev => [...prev, { role: 'coach', text: "عذراً بطل، لم أستطع فهم ذلك بسبب خطأ في الاتصال بالسيرفر. يرجى المحاولة لاحقاً." }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <div
+        className="glass-card animate-fade-up"
+        style={{
+          padding: '1.25rem', marginBottom: '1.25rem',
+          background: 'linear-gradient(135deg, rgba(0,240,255,0.04) 0%, rgba(255,0,110,0.03) 100%)',
+          borderLeft: '3px solid var(--cyan)',
+          position: 'relative', overflow: 'hidden', cursor: 'pointer'
+        }}
+        onClick={() => setShowChat(true)}
+      >
+        {/* Decorative glow */}
         <div style={{
-          width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
-          background: 'linear-gradient(135deg, var(--cyan), var(--magenta))',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 10px var(--cyan-glow)',
-        }}>
-          <Brain size={13} color="#000" />
+          position: 'absolute', top: -24, right: -24,
+          width: 90, height: 90,
+          background: 'var(--cyan-glow)', borderRadius: '50%',
+          filter: 'blur(24px)', pointerEvents: 'none', opacity: 0.5,
+        }} />
+
+        {/* Label row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{
+              width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+              background: 'linear-gradient(135deg, var(--cyan), var(--magenta))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 10px var(--cyan-glow)',
+            }}>
+              <Brain size={13} color="#000" />
+            </div>
+            <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.68rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
+              AI Coach
+            </span>
+          </div>
+          <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.5rem', background: 'rgba(0,240,255,0.1)', color: 'var(--cyan)', border: '1px solid rgba(0,240,255,0.3)', borderRadius: 4, fontWeight: 700 }}>
+            استشر المدرب 💬
+          </span>
         </div>
-        <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.68rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
-          AI Coach
-        </span>
+
+        {/* Caveat handwriting text */}
+        <p style={{
+          fontFamily: 'var(--font-handwriting)',
+          fontSize: '1.35rem', fontWeight: 700, lineHeight: 1.35,
+          color: 'var(--color-text)', margin: '0 0 0.3rem',
+          position: 'relative', zIndex: 1,
+        }}>
+          {headline}
+        </p>
+        <p style={{
+          fontFamily: 'var(--font-handwriting)',
+          fontSize: '1.1rem', fontWeight: 400, lineHeight: 1.4,
+          color: 'var(--color-text-muted)', margin: 0,
+          position: 'relative', zIndex: 1,
+        }}>
+          {subtitle}
+        </p>
       </div>
 
-      {/* Caveat handwriting text */}
-      <p style={{
-        fontFamily: 'var(--font-handwriting)',
-        fontSize: '1.35rem', fontWeight: 700, lineHeight: 1.35,
-        color: 'var(--color-text)', margin: '0 0 0.3rem',
-        position: 'relative', zIndex: 1,
-      }}>
-        {headline}
-      </p>
-      <p style={{
-        fontFamily: 'var(--font-handwriting)',
-        fontSize: '1.1rem', fontWeight: 400, lineHeight: 1.4,
-        color: 'var(--color-text-muted)', margin: 0,
-        position: 'relative', zIndex: 1,
-      }}>
-        {subtitle}
-      </p>
-    </div>
+      {/* Interactive Coach Dialog Modal */}
+      {showChat && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div className="glass-card animate-slide-up" style={{ width: '100%', maxWidth: '480px', height: '80vh', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, display: 'flex', flexDirection: 'column', border: '1px solid var(--cyan)', borderBottom: 'none' }}>
+            
+            {/* Chat Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan), var(--magenta))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 10px rgba(0,240,255,0.4)' }}>
+                  <Brain size={16} color="#000" />
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '0.95rem', color: '#fff' }}>OmniBody Coach AI</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--cyan)' }}>متصل ومستعد لتحليل تدريبك ونظامك الغذائي</div>
+                </div>
+              </div>
+              <button onClick={() => setShowChat(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '0.25rem' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {messages.map((m, idx) => (
+                <div key={idx} style={{
+                  display: 'flex',
+                  justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start',
+                  alignItems: 'flex-start',
+                  gap: '0.5rem'
+                }}>
+                  {m.role === 'coach' && (
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(0,240,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--cyan)', flexShrink: 0 }}>
+                      <Brain size={11} color="var(--cyan)" />
+                    </div>
+                  )}
+                  <div style={{
+                    maxWidth: '80%',
+                    padding: '0.75rem 1rem',
+                    borderRadius: 12,
+                    fontSize: '0.85rem',
+                    lineHeight: 1.5,
+                    whiteSpace: 'pre-wrap',
+                    background: m.role === 'user' ? 'var(--cyan)' : 'rgba(255,255,255,0.04)',
+                    color: m.role === 'user' ? '#000' : '#fff',
+                    fontWeight: m.role === 'user' ? 600 : 400,
+                    border: m.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.08)'
+                  }}>
+                    {m.text}
+                  </div>
+                </div>
+              ))}
+              {loading && (
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(0,240,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--cyan)' }}>
+                    <Loader2 size={11} className="animate-spin" color="var(--cyan)" />
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>جاري التفكير والكتابة...</div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Chat Input */}
+            <div style={{ padding: '0.8rem 1rem', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'rgba(0,0,0,0.3)' }}>
+              <input
+                type="text"
+                placeholder="اسأل المدرب عن إصابتك، تمارينك أو الكالوري..."
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
+                style={{ flex: 1, padding: '0.65rem 1rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,240,255,0.2)', borderRadius: 12, color: '#fff', fontSize: '0.85rem' }}
+              />
+              <button onClick={handleSendMessage} disabled={loading} style={{
+                background: 'var(--cyan)', border: 'none', width: '38px', height: '38px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', cursor: 'pointer', transition: 'all 0.15s'
+              }}>
+                <Send size={16} />
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

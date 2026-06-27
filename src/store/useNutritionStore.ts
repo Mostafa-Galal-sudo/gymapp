@@ -3,6 +3,7 @@ import { startOfDay } from 'date-fns';
 import db from '../db/db';
 import { useUserStore } from './useUserStore';
 import { FOOD_DATABASE } from '../data/foods';
+import { scheduleWaterReminders, cancelWaterReminders } from '../services/notificationService';
 
 export interface LoggedFood {
   foodId: string;
@@ -41,7 +42,11 @@ export interface NutritionDay {
 
 interface NutritionState {
   history: Record<number, NutritionDay>; // Keyed by start of day timestamp
-  getTargets: (weight: number) => { calories: number; protein: number; carbs: number; fats: number; fiber: number; water: number };
+  getTargets: (weight?: number) => { 
+    calories: number; protein: number; carbs: number; fats: number; fiber: number; water: number;
+    sodium: number; potassium: number; iron: number; calcium: number;
+    vitaminA: number; vitaminC: number; vitaminD: number; vitaminB12: number;
+  };
   loadUserHistory: (userId: string) => Promise<void>;
   addFood: (date: number, mealType: string, food: LoggedFood) => Promise<void>;
   removeFood: (date: number, mealId: string, foodId: string) => Promise<void>;
@@ -52,6 +57,7 @@ interface NutritionState {
   resetSupplements: (date: number) => Promise<void>;
   resetDay: (date: number) => Promise<void>;
   getTodayLog: () => NutritionDay;
+  getLogForDate: (date: number) => NutritionDay;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -71,14 +77,65 @@ export const useNutritionStore = create<NutritionState>()(
   (set, get) => ({
     history: {},
 
-    getTargets: (weight: number) => ({
-      calories: 3200,
-      protein: Math.round(weight * 2.05), // ~160g for 78kg
-      carbs: 400,
-      fats: 89,
-      fiber: 30,
-      water: 3500
-    }),
+    getTargets: (weightParam?: number) => {
+      const profile = useUserStore.getState().profile;
+      const weight = weightParam || profile.weight || 78;
+      const height = profile.height || 177;
+      const age = profile.age || 22;
+      const goals = profile.goals || [];
+      const activityLevel = profile.activityLevel || 'Moderate';
+
+      const isFemale = goals.some(g => g.toLowerCase().includes('female')) || (profile as any).gender === 'female';
+      const s = isFemale ? -161 : 5;
+      const bmr = 10 * weight + 6.25 * height - 5 * age + s;
+
+      const multiplierMap: Record<string, number> = {
+        'Sedentary': 1.2,
+        'Light': 1.375,
+        'Moderate': 1.55,
+        'Active': 1.725,
+      };
+      const multiplier = multiplierMap[activityLevel] ?? 1.55;
+
+      const tdee = bmr * multiplier;
+
+      let calories = tdee;
+      if (goals.some(g => g.toLowerCase().includes('loss') || g.toLowerCase().includes('cut') || g.toLowerCase().includes('aesthetics'))) {
+        calories = tdee - 500;
+      } else if (goals.some(g => g.toLowerCase().includes('strength') || g.toLowerCase().includes('bulk') || g.toLowerCase().includes('mass') || g.toLowerCase().includes('athletic'))) {
+        calories = tdee + 300;
+      }
+
+      calories = Math.round(calories);
+
+      const proteinG = Math.round(weight * 2.0);
+      const proteinKcal = proteinG * 4;
+      const fatsG = Math.round(weight * 1.0);
+      const fatsKcal = fatsG * 9;
+      const remainingKcal = calories - proteinKcal - fatsKcal;
+      const carbsG = Math.round(Math.max(50, remainingKcal / 4));
+
+      const fiberG = 30;
+      const waterMl = Math.round(weight * 35);
+
+      return {
+        calories,
+        protein: proteinG,
+        carbs: carbsG,
+        fats: fatsG,
+        fiber: fiberG,
+        water: waterMl,
+        sodium: 2300,        // mg (general upper limit / target)
+        potassium: 3400,     // mg
+        iron: isFemale ? 18 : 8, // mg
+        calcium: 1000,       // mg
+        vitaminA: isFemale ? 700 : 900, // mcg
+        vitaminC: isFemale ? 75 : 90,   // mg
+        vitaminD: 600,       // IU
+        vitaminB12: 2.4      // mcg
+      };
+    },
+
 
     loadUserHistory: async (userId: string) => {
       const logs = await db.daily_logs.where('userId').equals(userId).toArray();
@@ -144,26 +201,33 @@ export const useNutritionStore = create<NutritionState>()(
 
     getTodayLog: () => {
       const today = startOfDay(new Date()).getTime();
+      return get().getLogForDate(today);
+    },
+
+    getLogForDate: (date: number) => {
+      const targetDate = startOfDay(new Date(date)).getTime();
       const history = get().history;
-      if (!history[today]) {
+      if (!history[targetDate]) {
         return {
-          date: today,
+          date: targetDate,
           waterMl: 0,
           meals: [
             { id: generateId(), type: 'Breakfast', foods: [] },
             { id: generateId(), type: 'Lunch', foods: [] },
             { id: generateId(), type: 'Dinner', foods: [] },
-            { id: generateId(), type: 'Snacks', foods: [] }
+            { id: generateId(), type: 'Snacks', foods: [] },
+            { id: generateId(), type: 'Pre-workout', foods: [] },
+            { id: generateId(), type: 'Post-workout', foods: [] }
           ],
           supplementsTaken: {}
         };
       }
-      return history[today];
+      return history[targetDate];
     },
 
     addFood: async (date, mealType, food) => {
       const today = startOfDay(new Date(date)).getTime();
-      const dayLog = get().history[today] || get().getTodayLog();
+      const dayLog = get().history[today] || get().getLogForDate(today);
       
       let meal = dayLog.meals.find(m => m.type === mealType);
       if (!meal) {
@@ -203,7 +267,7 @@ export const useNutritionStore = create<NutritionState>()(
 
     addWater: async (date, amount) => {
       const today = startOfDay(new Date(date)).getTime();
-      const dayLog = get().history[today] || get().getTodayLog();
+      const dayLog = get().history[today] || get().getLogForDate(today);
       
       const newLog = { ...dayLog, waterMl: dayLog.waterMl + amount };
       set((state) => ({
@@ -212,17 +276,25 @@ export const useNutritionStore = create<NutritionState>()(
 
       const activeUserId = useUserStore.getState().activeUserId;
       if (activeUserId) await saveToDb(activeUserId, today, newLog);
+
+      // Handle water reminders if logging for today
+      if (today === startOfDay(new Date()).getTime()) {
+        const target = get().getTargets(useUserStore.getState().profile.weight).water;
+        if (newLog.waterMl >= target) {
+          cancelWaterReminders();
+        } else {
+          scheduleWaterReminders(target - newLog.waterMl);
+        }
+      }
     },
 
     toggleSupplement: async (date, supId, doseIndex) => {
       const today = startOfDay(new Date(date)).getTime();
-      const dayLog = get().history[today] || get().getTodayLog();
+      const dayLog = get().history[today] || get().getLogForDate(today);
       
       const supsTaken = { ...(dayLog.supplementsTaken || {}) };
       const doses = [...(supsTaken[supId] || [])];
       
-      // We might need to initialize the array length based on the actual supplement dose count
-      // but we can just lazily expand it if needed.
       if (doseIndex >= doses.length) {
         for (let i = doses.length; i <= doseIndex; i++) doses[i] = false;
       }
@@ -265,7 +337,7 @@ export const useNutritionStore = create<NutritionState>()(
 
     resetMeal: async (date, mealType) => {
       const today = startOfDay(new Date(date)).getTime();
-      const dayLog = get().history[today] || get().getTodayLog();
+      const dayLog = get().history[today] || get().getLogForDate(today);
       
       const meals = dayLog.meals.map(m => {
         if (m.type === mealType) return { ...m, foods: [] };
@@ -281,18 +353,23 @@ export const useNutritionStore = create<NutritionState>()(
 
     resetWater: async (date) => {
       const today = startOfDay(new Date(date)).getTime();
-      const dayLog = get().history[today] || get().getTodayLog();
+      const dayLog = get().history[today] || get().getLogForDate(today);
       
       const newLog = { ...dayLog, waterMl: 0 };
       set((state) => ({ history: { ...state.history, [today]: newLog } }));
       
       const activeUserId = useUserStore.getState().activeUserId;
       if (activeUserId) await saveToDb(activeUserId, today, newLog);
+
+      if (today === startOfDay(new Date()).getTime()) {
+        const target = get().getTargets(useUserStore.getState().profile.weight).water;
+        scheduleWaterReminders(target);
+      }
     },
 
     resetSupplements: async (date) => {
       const today = startOfDay(new Date(date)).getTime();
-      const dayLog = get().history[today] || get().getTodayLog();
+      const dayLog = get().history[today] || get().getLogForDate(today);
       
       const newLog = { ...dayLog, supplementsTaken: {} };
       set((state) => ({ history: { ...state.history, [today]: newLog } }));

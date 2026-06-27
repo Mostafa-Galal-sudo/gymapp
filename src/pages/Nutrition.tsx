@@ -1,16 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNutritionStore } from '../store/useNutritionStore';
 import type { LoggedFood, NutritionDay } from '../store/useNutritionStore';
 import { useUserStore } from '../store/useUserStore';
-import { startOfDay } from 'date-fns';
+import { startOfDay, format } from 'date-fns';
+
 import { FOOD_DATABASE } from '../data/foods';
 import type { Food } from '../data/foods';
 import { useGamificationStore } from '../store/useGamificationStore';
-import { Search, Plus, X, Droplet, Check, ChevronDown, RotateCcw } from 'lucide-react';
+import { Search, Plus, X, Droplet, Check, ChevronDown, RotateCcw, Calendar, ChevronLeft, ChevronRight, Camera, Sparkles, Loader2 } from 'lucide-react';
+
 import { useT } from '../hooks/useT';
 import { useLanguageStore } from '../store/useLanguageStore';
+import db from '../db/db';
 
-// ── Macro Liquid Bar ──────────────────────────────────────────────────────────
+// ── Circular Macro Ring ──────────────────────────────────────────────────────
+const MacroRing = ({ value, target, label, color, size = 72 }: {
+  value: number; target: number; label: string; color: string; size?: number;
+}) => {
+  const pct = Math.min(1, value / Math.max(1, target));
+  const r = (size - 10) / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = circ * pct;
+  const over = pct >= 1;
+  const displayColor = over ? 'var(--color-warning)' : color;
+  return (
+    <div className="macro-ring-wrap">
+      <div className="water-ring-container" style={{ width: size, height: size }}>
+        <svg width={size} height={size}>
+          <circle cx={size/2} cy={size/2} r={r} fill="none"
+            stroke="rgba(255,255,255,0.06)" strokeWidth={8} />
+          <circle cx={size/2} cy={size/2} r={r} fill="none"
+            stroke={displayColor} strokeWidth={8}
+            strokeDasharray={`${dash} ${circ}`}
+            strokeLinecap="round"
+            style={{ transition: 'stroke-dasharray 0.7s var(--ease-out)', filter: `drop-shadow(0 0 4px ${displayColor})` }}
+          />
+        </svg>
+        <div className="water-ring-center">
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: size < 80 ? '0.8rem' : '1rem', fontWeight: 700, color: displayColor, lineHeight: 1 }}>
+            {Math.round(value)}
+          </span>
+          {target > 0 && <span style={{ fontSize: '0.5rem', color: 'var(--color-text-muted)', opacity: 0.8 }}>/{target}</span>}
+        </div>
+      </div>
+      <span className="macro-ring-label">{label}</span>
+    </div>
+  );
+};
+
+// ── Macro Bar ──────────────────────────────────────────────────────────────────
 const MacroBar = ({ label, current, target, gradient, unit = 'g' }: {
   label: string; current: number; target: number; gradient: string; unit?: string;
 }) => {
@@ -33,54 +71,71 @@ const MacroBar = ({ label, current, target, gradient, unit = 'g' }: {
   );
 };
 
-// ── Water Bottle Visual ───────────────────────────────────────────────────────
-const WaterBottle = ({ current, target }: { current: number; target: number }) => {
-  const pct = Math.min(100, (current / target) * 100);
+
+// ── Water Section ────────────────────────────────────────────────────────────
+const WaterSection = ({ current, target, onAdd, onReset }: {
+  current: number; target: number; onAdd: (ml: number) => void; onReset: () => void;
+}) => {
+  const pct = Math.min(1, current / Math.max(1, target));
+  const size = 100;
+  const r = (size - 12) / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = circ * pct;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-      <div style={{ position: 'relative', width: 36, height: 64, flexShrink: 0 }}>
-        <svg viewBox="0 0 36 64" style={{ width: '100%', height: '100%' }}>
-          {/* Bottle outline */}
-          <rect x="10" y="0" width="16" height="8" rx="3" fill="rgba(0,240,255,0.15)" stroke="rgba(0,240,255,0.3)" strokeWidth="1"/>
-          <rect x="4"  y="8" width="28" height="54" rx="6" fill="rgba(0,240,255,0.06)" stroke="rgba(0,240,255,0.25)" strokeWidth="1"/>
-          {/* Water fill */}
-          <clipPath id="bottleClip">
-            <rect x="4" y="8" width="28" height="54" rx="6" />
-          </clipPath>
-          <rect x="4" y={8 + 54 * (1 - pct/100)} width="28" height={54 * pct/100} rx="0"
-            fill="rgba(0,240,255,0.25)" clipPath="url(#bottleClip)"
-            style={{ transition: 'y 0.6s ease, height 0.6s ease' }}
-          />
-        </svg>
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', fontSize: '0.85rem' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Droplet size={14} color="var(--cyan)" />Water</span>
-          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>{current}ml <span style={{ opacity: 0.5 }}>/ {target}ml</span></span>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        {/* Circular Water Ring */}
+        <div className="water-ring-container" style={{ width: size, height: size, flexShrink: 0 }}>
+          <svg width={size} height={size}>
+            <circle cx={size/2} cy={size/2} r={r} fill="none"
+              stroke="rgba(0,240,255,0.1)" strokeWidth={10} />
+            <circle cx={size/2} cy={size/2} r={r} fill="none"
+              stroke="var(--cyan)" strokeWidth={10}
+              strokeDasharray={`${dash} ${circ}`}
+              strokeLinecap="round"
+              style={{ transition: 'stroke-dasharray 0.7s var(--ease-out)', filter: 'drop-shadow(0 0 6px rgba(0,240,255,0.6))' }}
+            />
+          </svg>
+          <div className="water-ring-center" style={{ flexDirection: 'column' }}>
+            <Droplet size={14} color="var(--cyan)" />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--cyan)', lineHeight: 1 }}>
+              {current}
+            </span>
+            <span style={{ fontSize: '0.48rem', color: 'var(--color-text-muted)' }}>/{target}ml</span>
+          </div>
         </div>
-        <div className="macro-bar-track">
-          <div className="macro-bar-fill" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, var(--cyan), #0044ff)' }} />
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-          {[250, 500, 750].map(ml => (
-            <button key={ml} onClick={() => addWaterFn(ml)}
-              style={{
-                flex: 1, padding: '0.5rem 0.25rem', fontSize: '0.75rem',
-                fontFamily: 'var(--font-mono)', fontWeight: 700,
-                border: '1px solid rgba(0,240,255,0.2)', borderRadius: 'var(--radius-md)',
-                color: 'var(--cyan)', background: 'rgba(0,240,255,0.05)',
-                transition: 'all 0.2s',
-              }}
-            >+{ml}ml</button>
-          ))}
+        {/* Quick Add Buttons */}
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text)' }}>💧 Water Intake</span>
+            <button onClick={onReset} style={{ background: 'none', border: 'none', color: 'rgba(255,0,0,0.5)', display: 'flex', cursor: 'pointer' }}>
+              <RotateCcw size={14} />
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
+            {[150, 250, 350, 500].map(ml => (
+              <button key={ml} onClick={() => onAdd(ml)}
+                style={{
+                  padding: '0.55rem 0.2rem',
+                  fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 700,
+                  border: '1px solid rgba(0,240,255,0.25)', borderRadius: 'var(--radius-md)',
+                  color: 'var(--cyan)', background: 'rgba(0,240,255,0.06)',
+                  transition: 'all 0.2s', cursor: 'pointer',
+                }}
+              >+{ml}ml</button>
+            ))}
+          </div>
+          <div className="macro-bar-track" style={{ marginTop: '0.6rem', height: 6 }}>
+            <div className="macro-bar-fill"
+              style={{ width: `${Math.min(100, pct * 100)}%`, background: 'linear-gradient(90deg,var(--cyan),#0044ff)', height: 6 }} />
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-// Temp global fn ref (passed via closure)
-let addWaterFn = (_ml: number) => {};
+
 
 // ── Supplement Checklist ──────────────────────────────────────────────────────
 const Supplements = ({ todayLog, onReset }: { todayLog: NutritionDay, onReset: () => void }) => {
@@ -200,7 +255,7 @@ const FoodResultRow = ({ food, onAdd }: { food: Food, onAdd: (food: Food, quanti
 const Nutrition = () => {
   const t            = useT();
   const profile      = useUserStore(s => s.profile);
-  const getTodayLog  = useNutritionStore(s => s.getTodayLog);
+  const getLogForDate = useNutritionStore(s => s.getLogForDate);
   const historyData  = useNutritionStore(s => s.history);
   const getTargets   = useNutritionStore(s => s.getTargets);
   const addFood      = useNutritionStore(s => s.addFood);
@@ -212,16 +267,139 @@ const Nutrition = () => {
   const addXP        = useGamificationStore(s => s.addXP);
   const unlockBadge  = useGamificationStore(s => s.unlockBadge);
 
-  const todayStr = startOfDay(new Date()).getTime();
-  const todayLog = historyData[todayStr] || getTodayLog();
+  // Historical date state
+  const [selectedDate, setSelectedDate] = useState<number>(startOfDay(new Date()).getTime());
+  const todayLog = historyData[selectedDate] || getLogForDate(selectedDate);
   const targets  = getTargets(profile.weight);
-  addWaterFn     = (ml) => { addWater(todayLog.date, ml); };
 
+  // Search, custom foods, and AI Scanner states
   const [search, setSearch]       = useState('');
   const [searchTab, setSearchTab] = useState<'all' | 'raw'>('all');
   const [mealType, setMealType]   = useState('Breakfast');
   const [openMeals, setOpenMeals] = useState<Record<string, boolean>>({ Breakfast: true });
   const [showMicros, setShowMicros] = useState(false);
+
+  const [customFoods, setCustomFoods] = useState<any[]>([]);
+  const [showAddCustomFood, setShowAddCustomFood] = useState(false);
+  const [newCustomFood, setNewCustomFood] = useState({
+    name: '', nameAr: '', category: 'Protein', calories: 150, protein: 15, carbs: 10, fats: 3, fiber: 0, sodium: 0, servingSize: 100, servingUnit: 'g'
+  });
+
+  const [aiScanning, setAiScanning] = useState(false);
+  const [aiScanResult, setAiScanResult] = useState<any | null>(null);
+  const [showAiResultModal, setShowAiResultModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const barcodeScannerRef = useRef<any>(null);
+
+  const loadCustomFoods = async () => {
+    const list = await db.custom_foods.toArray();
+    setCustomFoods(list);
+  };
+
+  useEffect(() => {
+    loadCustomFoods();
+  }, []);
+
+  const changeDay = (days: number) => {
+    setSelectedDate(prev => prev + days * 24 * 60 * 60 * 1000);
+  };
+
+  const handleAiScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAiScanning(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64WithHeader = event.target?.result as string;
+        const base64Data = base64WithHeader.split(',')[1];
+        const mimeType = file.type;
+
+        const res = await fetch('/api/ai/nutrition', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64Data, mimeType })
+        });
+
+        if (!res.ok) throw new Error('Failed to analyze image');
+        const result = await res.json();
+        setAiScanResult(result);
+        setShowAiResultModal(true);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error scanning food:', error);
+    } finally {
+      setAiScanning(false);
+    }
+  };
+
+  const startBarcodeScanner = async () => {
+    setShowBarcodeScanner(true);
+    // slight delay to ensure DOM element is rendered
+    setTimeout(async () => {
+      try {
+        const { Html5Qrcode } = await import('html5-qrcode');
+        const scanner = new Html5Qrcode('barcode-reader-container');
+        barcodeScannerRef.current = scanner;
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          (decodedText: string) => {
+            // Try to find food by barcode field
+            const found = FOOD_DATABASE.find((f: any) => f.barcode === decodedText);
+            if (found) {
+              handleAdd(found, found.servingSize);
+              setSearch(found.name);
+            } else {
+              setSearch(decodedText);
+            }
+            stopBarcodeScanner();
+          },
+          () => {/* ignore frame errors */}
+        );
+      } catch (err) {
+        console.error('Barcode scanner error:', err);
+        setShowBarcodeScanner(false);
+      }
+    }, 300);
+  };
+
+  const stopBarcodeScanner = () => {
+    if (barcodeScannerRef.current) {
+      barcodeScannerRef.current.stop().catch(() => {});
+      barcodeScannerRef.current = null;
+    }
+    setShowBarcodeScanner(false);
+  };
+
+  const handleCreateCustomFood = async () => {
+    if (!newCustomFood.name) return;
+    const foodId = 'custom_' + Math.random().toString(36).substring(2, 9);
+    const item = {
+      id: foodId,
+      name: newCustomFood.name,
+      nameAr: newCustomFood.nameAr || newCustomFood.name,
+      category: newCustomFood.category,
+      calories: Number(newCustomFood.calories) || 0,
+      protein: Number(newCustomFood.protein) || 0,
+      carbs: Number(newCustomFood.carbs) || 0,
+      fats: Number(newCustomFood.fats) || 0,
+      fiber: Number(newCustomFood.fiber) || 0,
+      sodium: Number(newCustomFood.sodium) || 0,
+      servingSize: Number(newCustomFood.servingSize) || 100,
+      servingUnit: newCustomFood.servingUnit || 'g'
+    };
+    await db.custom_foods.put(item);
+    await loadCustomFoods();
+    setShowAddCustomFood(false);
+    setNewCustomFood({
+      name: '', nameAr: '', category: 'Protein', calories: 150, protein: 15, carbs: 10, fats: 3, fiber: 0, sodium: 0, servingSize: 100, servingUnit: 'g'
+    });
+  };
 
   let totalCal = 0, totalPro = 0, totalCarbs = 0, totalFats = 0;
   let tFib = 0, tSug = 0, tSod = 0, tPot = 0, tIron = 0, tCal = 0, tVitA = 0, tVitC = 0, tVitD = 0, tVitB12 = 0;
@@ -243,10 +421,13 @@ const Nutrition = () => {
     tVitB12 += f.vitaminB12 || 0;
   }));
 
+  const allFoods = [...FOOD_DATABASE, ...customFoods];
   const filtered = search.length > 1
-    ? FOOD_DATABASE.filter(f => {
+    ? allFoods.filter(f => {
         if (searchTab === 'raw' && f.category !== 'Raw') return false;
-        return f.name.toLowerCase().includes(search.toLowerCase());
+        const nameMatch = f.name.toLowerCase().includes(search.toLowerCase());
+        const arNameMatch = f.nameAr && f.nameAr.includes(search);
+        return nameMatch || arNameMatch;
       }).slice(0, 10)
     : [];
 
@@ -334,24 +515,36 @@ const Nutrition = () => {
         </h1>
       </header>
 
+      {/* Date Switcher */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,240,255,0.03)', borderRadius: 12, padding: '0.75rem 1rem', marginBottom: '1.25rem', border: '1px solid rgba(0,240,255,0.08)' }}>
+        <button onClick={() => changeDay(-1)} style={{ padding: '0.4rem', color: 'var(--cyan)', background: 'rgba(0,240,255,0.06)', borderRadius: '50%', border: 'none', display: 'flex' }}>
+          <ChevronRight size={18} />
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Calendar size={16} color="var(--cyan)" />
+          <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>
+            {format(selectedDate, 'eeee, MMMM d')}
+          </span>
+          {startOfDay(new Date()).getTime() === selectedDate && (
+            <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', background: 'var(--cyan)', color: '#000', borderRadius: 4, fontWeight: 700 }}>{t('common.today' as any) || 'Today'}</span>
+          )}
+        </div>
+        <button onClick={() => changeDay(1)} style={{ padding: '0.4rem', color: 'var(--cyan)', background: 'rgba(0,240,255,0.06)', borderRadius: '50%', border: 'none', display: 'flex' }}>
+          <ChevronLeft size={18} />
+        </button>
+      </div>
+
       {/* Macro Summary */}
       <div className="glass-card animate-fade-up" style={{ padding: '1.5rem', marginBottom: '1.25rem' }}>
+        {/* Circular Macro Rings */}
         <div style={{
           display: 'flex', justifyContent: 'space-around', marginBottom: '1.5rem',
-          textAlign: 'center', gap: '0.5rem',
+          gap: '0.25rem',
         }}>
-          {[
-            { label: t('dash.calories'), val: Math.round(totalCal), unit: t('common.kcal'), color: 'var(--cyan)' },
-            { label: t('dash.protein'), val: Math.round(totalPro), unit: 'g', color: 'var(--color-success)' },
-            { label: t('nutrition.carbs'), val: Math.round(totalCarbs), unit: 'g', color: 'var(--color-warning)' },
-            { label: t('nutrition.fats'), val: Math.round(totalFats), unit: 'g', color: 'var(--magenta)' },
-          ].map(({ label, val, unit, color }) => (
-            <div key={label}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: 700, color, lineHeight: 1 }}>{val}</div>
-              <div style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</div>
-              <div style={{ fontSize: '0.65rem', color, opacity: 0.6, fontFamily: 'var(--font-mono)' }}>{unit}</div>
-            </div>
-          ))}
+          <MacroRing value={Math.round(totalCal)} target={targets.calories} label={t('dash.calories')} color="var(--cyan)" size={76} />
+          <MacroRing value={Math.round(totalPro)} target={targets.protein} label={t('dash.protein')} color="var(--color-success)" size={76} />
+          <MacroRing value={Math.round(totalCarbs)} target={targets.carbs} label={t('nutrition.carbs')} color="var(--color-warning)" size={76} />
+          <MacroRing value={Math.round(totalFats)} target={targets.fats} label={t('nutrition.fats')} color="var(--magenta)" size={76} />
         </div>
         <MacroBar label={t('dash.calories')} current={totalCal} target={targets.calories} gradient="linear-gradient(90deg,var(--cyan),#0080ff)" unit={` ${t('common.kcal')}`} />
         <MacroBar label={t('dash.protein')} current={totalPro} target={targets.protein} gradient="linear-gradient(90deg,#00ff88,var(--cyan))" />
@@ -365,48 +558,168 @@ const Nutrition = () => {
         }}>
           {t('nutrition.more_nutrients')} <ChevronDown size={14} style={{ transform: showMicros ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
         </button>
-        {showMicros && (
-          <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1.25rem', fontSize: '0.75rem' }}>
-            {[
-              { label: t('nutrition.fiber'),     val: `${Math.round(tFib)}g` },
-              { label: t('nutrition.sugar'),     val: `${Math.round(tSug)}g` },
-              { label: t('nutrition.sodium'),    val: `${Math.round(tSod)}mg` },
-              { label: t('nutrition.potassium'), val: `${Math.round(tPot)}mg` },
-              { label: t('nutrition.iron'),      val: `${tIron.toFixed(1)}mg` },
-              { label: t('nutrition.calcium'),   val: `${Math.round(tCal)}mg` },
-              { label: t('nutrition.vitaminC'),  val: `${Math.round(tVitC)}mg` },
-              { label: t('nutrition.vitaminA'),  val: `${Math.round(tVitA)}mcg` },
-              { label: t('nutrition.vitaminD'),  val: `${tVitD.toFixed(1)}mcg` },
-            ].map(({ label, val }) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.25rem' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>{label}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{val}</span>
-              </div>
-            ))}
-          </div>
-        )}
+        {showMicros && (() => {
+          const microRows = [
+            { label: t('nutrition.fiber'),     current: tFib,              target: targets.fiber,      unit: 'g',   color: '#a78bfa' },
+            { label: t('nutrition.sugar'),     current: tSug,              target: 50,                 unit: 'g',   color: '#fb923c' },
+            { label: t('nutrition.sodium'),    current: tSod,              target: targets.sodium,     unit: 'mg',  color: '#60a5fa' },
+            { label: t('nutrition.potassium'), current: tPot,              target: targets.potassium,  unit: 'mg',  color: '#a78bfa' },
+            { label: t('nutrition.iron'),      current: tIron,             target: targets.iron,       unit: 'mg',  color: '#f87171' },
+            { label: t('nutrition.calcium'),   current: tCal,              target: targets.calcium,    unit: 'mg',  color: '#94a3b8' },
+            { label: t('nutrition.vitaminC'),  current: tVitC,             target: targets.vitaminC,   unit: 'mg',  color: '#f97316' },
+            { label: t('nutrition.vitaminA'),  current: tVitA,             target: targets.vitaminA,   unit: 'mcg', color: '#fbbf24' },
+            { label: t('nutrition.vitaminD'),  current: tVitD,             target: targets.vitaminD,   unit: 'IU',  color: '#fde68a' },
+            { label: t('nutrition.vitaminB12'),current: tVitB12,           target: targets.vitaminB12, unit: 'mcg', color: '#e879f9' },
+          ];
+          return (
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {microRows.map(({ label, current, target, unit, color }) => {
+                const pct = Math.min(100, (current / Math.max(1, target)) * 100);
+                const over = pct >= 100;
+                const displayColor = over ? 'var(--color-warning)' : color;
+                const displayVal = unit === 'g' || unit === 'mcg'
+                  ? current.toFixed(1)
+                  : Math.round(current);
+                const targetVal = unit === 'g' || unit === 'mcg'
+                  ? Number(target).toFixed(1)
+                  : Math.round(target);
+                return (
+                  <div key={label}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginBottom: '0.2rem' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>{label}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: displayColor }}>
+                        {displayVal}<span style={{ opacity: 0.6 }}>{unit}</span>
+                        <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}> / {targetVal}{unit}</span>
+                      </span>
+                    </div>
+                    <div style={{ height: 5, borderRadius: 999, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', width: `${pct}%`, borderRadius: 999,
+                        background: displayColor,
+                        transition: 'width 0.6s var(--ease-out)',
+                        boxShadow: `0 0 6px ${displayColor}66`
+                      }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Water */}
       <div className="glass-card animate-fade-up" style={{ padding: '1.25rem', marginBottom: '1.25rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <div className="section-label" style={{ margin: 0 }}>{t('nutrition.water')}</div>
-          <button 
-            onClick={() => window.confirm('Reset water intake to 0?') && resetWater(todayLog.date)}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,0,0,0.6)', cursor: 'pointer', display: 'flex' }}
-          >
-            <RotateCcw size={16} />
-          </button>
-        </div>
-        <WaterBottle current={todayLog.waterMl} target={targets.water} />
+        <WaterSection
+          current={todayLog.waterMl}
+          target={targets.water}
+          onAdd={(ml) => addWater(selectedDate, ml)}
+          onReset={() => window.confirm('Reset water intake to 0?') && resetWater(todayLog.date)}
+        />
       </div>
 
       {/* Food Search + Add */}
       <div className="animate-fade-up" style={{ marginBottom: '1.25rem' }}>
         <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {t('nutrition.log_food')}
+          <span>{t('nutrition.log_food')}</span>
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+            {/* AI Scan Button */}
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleAiScan} style={{ display: 'none' }} />
+            <button onClick={() => fileInputRef.current?.click()} disabled={aiScanning} style={{
+              display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.75rem', fontSize: '0.75rem', fontWeight: 700,
+              background: 'linear-gradient(135deg, var(--cyan), var(--magenta))', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer',
+              boxShadow: '0 0 10px rgba(0,240,255,0.3)', transition: 'all 0.2s'
+            }}>
+              {aiScanning ? <Loader2 className="animate-spin" size={14} /> : <Camera size={14} />}
+              {aiScanning ? t('common.loading') : 'AI Scan'}
+            </button>
+
+            {/* Barcode Scanner Button */}
+            <button onClick={showBarcodeScanner ? stopBarcodeScanner : startBarcodeScanner} style={{
+              display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.75rem', fontSize: '0.75rem', fontWeight: 700,
+              background: showBarcodeScanner ? 'rgba(255,0,85,0.15)' : 'rgba(255,170,0,0.12)',
+              color: showBarcodeScanner ? 'var(--magenta)' : 'var(--gold)',
+              border: `1px solid ${showBarcodeScanner ? 'rgba(255,0,85,0.3)' : 'rgba(255,170,0,0.3)'}`,
+              borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s'
+            }}>
+              {showBarcodeScanner ? <X size={14} /> : <Sparkles size={14} />}
+              {showBarcodeScanner ? t('nutrition.stop_scan') : t('nutrition.scan_barcode')}
+            </button>
+
+            {/* Add Custom Food Trigger */}
+            <button onClick={() => setShowAddCustomFood(!showAddCustomFood)} style={{
+              display: 'flex', alignItems: 'center', gap: '0.2rem', padding: '0.35rem 0.6rem', fontSize: '0.75rem', fontWeight: 600,
+              background: 'rgba(255,170,0,0.1)', color: 'var(--gold)', border: '1px solid rgba(255,170,0,0.3)', borderRadius: 8, cursor: 'pointer'
+            }}>
+              <Plus size={12} /> {t('common.add')}
+            </button>
+          </div>
         </div>
-        
+
+        {/* Custom Food Creation Form */}
+        {showAddCustomFood && (
+          <div className="glass-card animate-fade-in" style={{ padding: '1.25rem', marginBottom: '1rem', border: '1px solid var(--gold)' }}>
+            <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '0.9rem', color: 'var(--gold)', marginBottom: '0.75rem' }}>{t('nutrition.log_food')}</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <input type="text" placeholder={t('auth.name')} value={newCustomFood.name}
+                onChange={e => setNewCustomFood({ ...newCustomFood, name: e.target.value })}
+                style={{ width: '100%', padding: '0.5rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff' }} />
+              <input type="text" placeholder={t('profile.bmi') ? 'Name (Arabic)' : 'Arabic Name'} value={newCustomFood.nameAr}
+                onChange={e => setNewCustomFood({ ...newCustomFood, nameAr: e.target.value })}
+                style={{ width: '100%', padding: '0.5rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff' }} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem', marginBottom: '0.75rem' }}>
+              <div>
+                <label style={{ fontSize: '0.62rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.15rem' }}>{t('dash.calories')}</label>
+                <input type="number" value={newCustomFood.calories} onChange={e => setNewCustomFood({ ...newCustomFood, calories: parseInt(e.target.value) || 0 })}
+                  style={{ width: '100%', padding: '0.4rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: '0.8rem', textAlign: 'center' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.62rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.15rem' }}>{t('dash.protein')} (g)</label>
+                <input type="number" value={newCustomFood.protein} onChange={e => setNewCustomFood({ ...newCustomFood, protein: parseFloat(e.target.value) || 0 })}
+                  style={{ width: '100%', padding: '0.4rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: '0.8rem', textAlign: 'center' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.62rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.15rem' }}>{t('nutrition.carbs')} (g)</label>
+                <input type="number" value={newCustomFood.carbs} onChange={e => setNewCustomFood({ ...newCustomFood, carbs: parseFloat(e.target.value) || 0 })}
+                  style={{ width: '100%', padding: '0.4rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: '0.8rem', textAlign: 'center' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.62rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.15rem' }}>{t('nutrition.fats')} (g)</label>
+                <input type="number" value={newCustomFood.fats} onChange={e => setNewCustomFood({ ...newCustomFood, fats: parseFloat(e.target.value) || 0 })}
+                  style={{ width: '100%', padding: '0.4rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: '0.8rem', textAlign: 'center' }} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <select value={newCustomFood.category} onChange={e => setNewCustomFood({ ...newCustomFood, category: e.target.value })} style={{ fontSize: '0.8rem' }}>
+                <option value="Protein">بروتين / لحوم</option>
+                <option value="Dairy">ألبان</option>
+                <option value="Supermarket">منتجات سوبرماركت</option>
+                <option value="Fruit">فواكه / خضروات</option>
+                <option value="Cooked">مطبوخ</option>
+              </select>
+              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                <input type="number" placeholder="الحجم" value={newCustomFood.servingSize} onChange={e => setNewCustomFood({ ...newCustomFood, servingSize: parseInt(e.target.value) || 100 })}
+                  style={{ flex: 1, padding: '0.5rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: '0.8rem' }} />
+                <input type="text" placeholder="الوحدة" value={newCustomFood.servingUnit} onChange={e => setNewCustomFood({ ...newCustomFood, servingUnit: e.target.value })}
+                  style={{ width: '45px', padding: '0.5rem', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: '#fff', fontSize: '0.8rem', textAlign: 'center' }} />
+              </div>
+            </div>
+            <button className="btn-primary" onClick={handleCreateCustomFood} style={{ width: '100%', padding: '0.6rem', fontSize: '0.8rem', background: 'var(--gold)', borderColor: 'var(--gold)', color: '#000' }}>{t('common.save')}</button>
+          </div>
+        )}
+
+        {/* Barcode Scanner Container */}
+        {showBarcodeScanner && (
+          <div style={{ marginBottom: '1rem', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--gold)', background: '#000' }}>
+            <div id="barcode-reader-container" style={{ width: '100%', minHeight: 200 }} />
+            <div style={{ padding: '0.5rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+              {t('nutrition.scan_barcode')} — {t('nutrition.stop_scan')}
+            </div>
+          </div>
+        )}
+
+        {/* Search Bars */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
           <button onClick={() => setSearchTab('all')} style={{
             flex: 1, padding: '0.4rem', fontSize: '0.75rem', fontWeight: 600,
@@ -429,7 +742,7 @@ const Nutrition = () => {
           </select>
           <div style={{ position: 'relative', flex: 1 }}>
             <Search size={16} style={{ position: 'absolute', insetInlineStart: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
-            <input type="text" placeholder={t('nutrition.search')} value={search}
+            <input type="text" placeholder={t('nutrition.search') || "البحث عن طعام أو منتج..."} value={search}
               onChange={e => setSearch(e.target.value)}
               style={{ paddingInlineStart: '2.25rem' }}
             />
@@ -442,6 +755,78 @@ const Nutrition = () => {
           </div>
         )}
       </div>
+
+      {/* AI Food Scan Success Modal */}
+      {showAiResultModal && aiScanResult && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="glass-card animate-scale-up" style={{ width: '100%', maxWidth: '420px', padding: '1.5rem', border: '1px solid var(--cyan)', position: 'relative' }}>
+            <button onClick={() => setShowAiResultModal(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--color-text-muted)' }}><X size={18} /></button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+              <Sparkles size={18} color="var(--cyan)" />
+              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', color: 'var(--cyan)', margin: 0 }}>تحليل الوجبة بالذكاء الاصطناعي</h3>
+            </div>
+            
+            <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: 8, padding: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
+              <h4 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 0.25rem 0' }}>{useLanguageStore.getState().lang === 'ar' ? aiScanResult.nameAr : aiScanResult.name}</h4>
+              <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--magenta)', border: '1px solid var(--magenta)', padding: '0.1rem 0.4rem', borderRadius: 4, fontWeight: 700 }}>
+                {aiScanResult.category}
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--cyan)' }}>{aiScanResult.calories}</div>
+                  <div style={{ fontSize: '0.55rem', color: 'var(--color-text-muted)' }}>سعرة</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-success)' }}>{aiScanResult.protein}g</div>
+                  <div style={{ fontSize: '0.55rem', color: 'var(--color-text-muted)' }}>بروتين</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-warning)' }}>{aiScanResult.carbs}g</div>
+                  <div style={{ fontSize: '0.55rem', color: 'var(--color-text-muted)' }}>كارب</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--magenta)' }}>{aiScanResult.fats}g</div>
+                  <div style={{ fontSize: '0.55rem', color: 'var(--color-text-muted)' }}>دهون</div>
+                </div>
+              </div>
+            </div>
+
+            {aiScanResult.analysis && (
+              <div style={{ padding: '0.75rem', background: 'rgba(0,240,255,0.04)', borderLeft: '3px solid var(--cyan)', borderRadius: '0 8px 8px 0', fontSize: '0.78rem', lineHeight: 1.4, color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+                💡 <strong>رأي المدرب:</strong> {aiScanResult.analysis}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: '0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>إضافة إلى وجبة:</span>
+                <select value={mealType} onChange={e => setMealType(e.target.value)} style={{ flex: 1, padding: '0.25rem', fontSize: '0.8rem' }}>
+                  {MEAL_TYPE_KEYS.map(key => <option key={key} value={key}>{MEAL_TYPE_LABELS[key]}</option>)}
+                </select>
+              </div>
+              <button className="btn-primary" onClick={() => {
+                const scannedFood: Food = {
+                  id: 'scan_' + Date.now(),
+                  name: aiScanResult.name,
+                  nameAr: aiScanResult.nameAr,
+                  category: aiScanResult.category,
+                  calories: aiScanResult.calories,
+                  protein: aiScanResult.protein,
+                  carbs: aiScanResult.carbs,
+                  fats: aiScanResult.fats,
+                  fiber: aiScanResult.fiber,
+                  sodium: aiScanResult.sodium,
+                  potassium: aiScanResult.potassium,
+                  servingSize: aiScanResult.servingSize || 100,
+                  servingUnit: aiScanResult.servingUnit || 'g'
+                };
+                handleAdd(scannedFood, aiScanResult.servingSize || 100);
+                setShowAiResultModal(false);
+              }} style={{ width: '100%', padding: '0.75rem' }}>تسجيل هذه الوجبة الآن</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Meal Logs */}
       <div style={{ marginBottom: '1.5rem' }}>

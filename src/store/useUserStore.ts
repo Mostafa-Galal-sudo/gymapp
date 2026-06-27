@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import db from '../db/db';
+import db, { type InjuryEntry } from '../db/db';
 
 export interface Supplement {
   id: string;
@@ -17,6 +17,8 @@ export interface UserProfile {
   level: string;
   goals: string[];
   profilePhoto?: string;
+  activityLevel?: 'Sedentary' | 'Light' | 'Moderate' | 'Active';
+  gender?: 'male' | 'female';
 }
 
 export interface WeightEntry {
@@ -29,12 +31,17 @@ interface UserState {
   profile: UserProfile;
   supplements: Supplement[];
   weightHistory: WeightEntry[];
+  injuries: InjuryEntry[];
   isAuthenticated: boolean;
   loadUser: (userId: string) => Promise<void>;
   createUser: (userId: string, name: string) => Promise<void>;
   logout: () => void;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   logWeight: (weight: number) => Promise<void>;
+  addSupplement: (supplement: Supplement) => Promise<void>;
+  deleteSupplement: (id: string) => Promise<void>;
+  addInjury: (injury: Omit<InjuryEntry, 'id' | 'userId' | 'dateLogged'>) => Promise<void>;
+  deleteInjury: (id: string) => Promise<void>;
 }
 
 const DEFAULT_SUPPLEMENTS: Supplement[] = [
@@ -48,17 +55,19 @@ const DEFAULT_SUPPLEMENTS: Supplement[] = [
 
 const DEFAULT_PROFILE: UserProfile = {
   name: 'User',
-  age: 22,
-  weight: 78,
-  height: 177,
-  level: 'Intermediate',
-  goals: ['Strength', 'Athletic', 'Aesthetics'],
+  age: 25,
+  weight: 70,
+  height: 175,
+  level: 'Beginner',
+  goals: ['General Fitness'],
+  activityLevel: 'Moderate',
+  gender: 'male',
 };
 
 const saveToDb = async (state: UserState) => {
-  if (!state.activeUserId) return;
+  const userId = state.activeUserId || 'default_user';
   await db.users.put({
-    id: state.activeUserId,
+    id: userId,
     profile: state.profile,
     supplements: state.supplements,
     weightHistory: state.weightHistory
@@ -70,46 +79,58 @@ export const useUserStore = create<UserState>()((set, get) => ({
   profile: DEFAULT_PROFILE,
   supplements: DEFAULT_SUPPLEMENTS,
   weightHistory: [],
+  injuries: [],
   isAuthenticated: false,
 
   loadUser: async (userId: string) => {
-    const user = await db.users.get(userId);
+    const id = userId || 'default_user';
+    const user = await db.users.get(id);
+    const injuries = await db.injuries.where('userId').equals(id).toArray();
     if (user) {
+      localStorage.setItem('omni_active_user', id);
       set({
-        activeUserId: userId,
+        activeUserId: id,
         profile: user.profile,
-        supplements: user.supplements,
-        weightHistory: user.weightHistory,
+        supplements: user.supplements || DEFAULT_SUPPLEMENTS,
+        weightHistory: user.weightHistory || [],
+        injuries: injuries || [],
         isAuthenticated: true
       });
+    } else {
+      await get().createUser(id, 'User');
     }
   },
 
   createUser: async (userId: string, name: string) => {
+    const id = userId || 'default_user';
     const profile = { ...DEFAULT_PROFILE, name };
     const weightHistory = [{ date: Date.now(), weight: profile.weight }];
     await db.users.put({
-      id: userId,
+      id,
       profile,
       supplements: DEFAULT_SUPPLEMENTS,
       weightHistory
     });
+    localStorage.setItem('omni_active_user', id);
     set({
-      activeUserId: userId,
+      activeUserId: id,
       profile,
       supplements: DEFAULT_SUPPLEMENTS,
       weightHistory,
+      injuries: [],
       isAuthenticated: true
     });
   },
 
   logout: () => {
+    localStorage.removeItem('omni_active_user');
     set({
       activeUserId: null,
       isAuthenticated: false,
       profile: DEFAULT_PROFILE,
       supplements: DEFAULT_SUPPLEMENTS,
-      weightHistory: []
+      weightHistory: [],
+      injuries: []
     });
   },
 
@@ -126,5 +147,38 @@ export const useUserStore = create<UserState>()((set, get) => ({
     const newHistory = [...state.weightHistory, { date: Date.now(), weight }];
     set({ profile: newProfile, weightHistory: newHistory });
     await saveToDb({ ...state, profile: newProfile, weightHistory: newHistory });
+  },
+
+  addSupplement: async (supplement: Supplement) => {
+    const state = get();
+    const newSupplements = [...state.supplements, supplement];
+    set({ supplements: newSupplements });
+    await saveToDb({ ...state, supplements: newSupplements });
+  },
+
+  deleteSupplement: async (id: string) => {
+    const state = get();
+    const newSupplements = state.supplements.filter(s => s.id !== id);
+    set({ supplements: newSupplements });
+    await saveToDb({ ...state, supplements: newSupplements });
+  },
+
+  addInjury: async (injury) => {
+    const state = get();
+    const id = Math.random().toString(36).substring(2, 9);
+    const userId = state.activeUserId || 'default_user';
+    const newEntry: InjuryEntry = {
+      ...injury,
+      id,
+      userId,
+      dateLogged: Date.now()
+    };
+    await db.injuries.put(newEntry);
+    set({ injuries: [...state.injuries, newEntry] });
+  },
+
+  deleteInjury: async (id: string) => {
+    await db.injuries.delete(id);
+    set(state => ({ injuries: state.injuries.filter(i => i.id !== id) }));
   }
 }));

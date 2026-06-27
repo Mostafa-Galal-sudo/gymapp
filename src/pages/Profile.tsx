@@ -5,18 +5,21 @@ import { useUserStore } from '../store/useUserStore';
 import { useWorkoutStore } from '../store/useWorkoutStore';
 import { useGamificationStore } from '../store/useGamificationStore';
 import { useDeviceStore } from '../store/useDeviceStore';
+import { useNutritionStore } from '../store/useNutritionStore';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
 import {
   Download, Upload, Save, Trophy, Plus, ShieldAlert, Watch, Activity,
-  HeartPulse, ShieldCheck, Globe, ChevronUp, ChevronDown, Camera, X, Loader2
+  HeartPulse, ShieldCheck, Globe, ChevronUp, ChevronDown, Camera, X, Loader2,
+  Pill, Trash2
 } from 'lucide-react';
 import { useT } from '../hooks/useT';
 import { useLanguageStore } from '../store/useLanguageStore';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
+import db from '../db/db';
 
 // ── Custom Recharts Tooltip ───────────────────────────────────────────────────
 const ChartTooltip = ({ active, payload, label }: any) => {
@@ -40,6 +43,7 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
   const [form, setForm] = useState({ ...profile });
   const photoRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(profile.profilePhoto || null);
+  const t = useT();
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -78,7 +82,7 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
           <X size={20} />
         </button>
         <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>
-          تعديل الملف الشخصي
+          {t('profile.edit')}
         </h3>
 
         {/* Photo Upload */}
@@ -105,31 +109,40 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
           </div>
           <input type="file" accept="image/*" ref={photoRef} style={{ display: 'none' }} onChange={handlePhotoChange} />
           <button onClick={() => photoRef.current?.click()} style={{ color: 'var(--cyan)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-            <Camera size={14} style={{ display: 'inline', marginRight: 4 }} /> تغيير الصورة
+            <Camera size={14} style={{ display: 'inline', marginRight: 4 }} /> {t('profile.change_photo')}
           </button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>الاسم</label>
+            <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>{t('auth.name')}</label>
             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={{ width: '100%' }} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>العمر</label>
+              <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>{t('auth.age')}</label>
               <input type="number" value={form.age} onChange={e => setForm(f => ({ ...f, age: +e.target.value }))} style={{ width: '100%' }} />
             </div>
             <div>
-              <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>الوزن (كغ)</label>
+              <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>{t('auth.weight')}</label>
               <input type="number" value={form.weight} onChange={e => setForm(f => ({ ...f, weight: +e.target.value }))} style={{ width: '100%' }} />
             </div>
           </div>
-          <div>
-            <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>الطول (سم)</label>
-            <input type="number" value={form.height} onChange={e => setForm(f => ({ ...f, height: +e.target.value }))} style={{ width: '100%' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>{t('auth.height')}</label>
+              <input type="number" value={form.height} onChange={e => setForm(f => ({ ...f, height: +e.target.value }))} style={{ width: '100%' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>{t('profile.gender')}</label>
+              <select value={form.gender || 'male'} onChange={e => setForm(f => ({ ...f, gender: e.target.value as 'male' | 'female' }))} style={{ width: '100%' }}>
+                <option value="male">{t('profile.male')}</option>
+                <option value="female">{t('profile.female')}</option>
+              </select>
+            </div>
           </div>
           <div>
-            <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>المستوى</label>
+            <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>{t('dash.level')}</label>
             <select value={form.level} onChange={e => setForm(f => ({ ...f, level: e.target.value }))} style={{ width: '100%' }}>
               {['Beginner', 'Intermediate', 'Advanced', 'Elite'].map(l => <option key={l} value={l}>{l}</option>)}
             </select>
@@ -137,9 +150,9 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-          <button onClick={onClose} className="btn-secondary" style={{ flex: 1, padding: '0.9rem' }}>إلغاء</button>
+          <button onClick={onClose} className="btn-secondary" style={{ flex: 1, padding: '0.9rem' }}>{t('common.cancel')}</button>
           <button onClick={handleSave} className="btn-primary" style={{ flex: 1, padding: '0.9rem' }}>
-            <Save size={16} style={{ display: 'inline', marginRight: 4 }} /> حفظ
+            <Save size={16} style={{ display: 'inline', marginRight: 4 }} /> {t('common.save')}
           </button>
         </div>
       </div>
@@ -193,6 +206,7 @@ const GarminConnectButton = () => {
     }
   };
 
+  const t = useT();
   if (isConnected) {
     return (
       <button onClick={() => navigate('/device-live')}
@@ -202,7 +216,7 @@ const GarminConnectButton = () => {
           color: '#22c55e', display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer'
         }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
-        {deviceName} · فتح
+        {deviceName} · {t('common.open' as any) || 'Open'}
       </button>
     );
   }
@@ -218,10 +232,146 @@ const GarminConnectButton = () => {
           cursor: scanning ? 'not-allowed' : 'pointer'
         }}>
         {scanning ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <HeartPulse size={14} />}
-        {scanning ? 'جاري البحث...' : 'اتصال حقيقي'}
+        {scanning ? t('common.loading') : t('profile.connect')}
       </button>
       {error && <div style={{ fontSize: '0.65rem', color: 'var(--magenta)', marginTop: '0.3rem', maxWidth: 200 }}>{error}</div>}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+};
+
+// ── Google Fit / Apple Health Sync ─────────────────────────────────────────────
+const HealthSyncButton = () => {
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const t = useT();
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const { syncHealth } = await import('../services/healthService');
+      const data = await syncHealth();
+      setLastSync(new Date().toLocaleTimeString());
+      alert(`${t('profile.sync_health')}: ${data.steps}`);
+    } catch (err) {
+      // ignore or alert
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+      <button onClick={handleSync} disabled={syncing}
+        style={{
+          background: syncing ? 'rgba(34,197,94,0.05)' : 'rgba(34,197,94,0.1)',
+          border: '1px solid rgba(34,197,94,0.3)',
+          borderRadius: '8px', padding: '0.4rem 0.75rem', fontSize: '0.75rem',
+          color: '#22c55e', display: 'flex', alignItems: 'center', gap: '0.4rem',
+          cursor: syncing ? 'not-allowed' : 'pointer'
+        }}>
+        {syncing ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Activity size={14} />}
+        {syncing ? t('profile.syncing') : t('profile.sync_health')}
+      </button>
+      {lastSync && <span style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>{t('profile.last_sync')}: {lastSync}</span>}
+    </div>
+  );
+};
+
+// ── BMI Calculator & Nutrition Targets ───────────────────────────────────
+const BMICalculatorSection = () => {
+  const { profile } = useUserStore();
+  const { getTargets } = useNutritionStore();
+  const t = useT();
+
+  const bmi = profile.height > 0
+    ? parseFloat((profile.weight / ((profile.height / 100) ** 2)).toFixed(1))
+    : 0;
+
+  const bmiCategory = bmi < 18.5
+    ? { key: 'profile.underweight', color: 'var(--cyan)', bg: 'rgba(0,240,255,0.08)' }
+    : bmi < 25
+    ? { key: 'profile.normal', color: '#22c55e', bg: 'rgba(34,197,94,0.08)' }
+    : bmi < 30
+    ? { key: 'profile.overweight', color: 'var(--gold)', bg: 'rgba(255,200,0,0.08)' }
+    : { key: 'profile.obese', color: 'var(--magenta)', bg: 'rgba(255,0,85,0.08)' };
+
+  const bmiPct = Math.min(100, Math.max(0, ((bmi - 10) / 30) * 100));
+  const targets = getTargets(profile.weight);
+
+  const macros = [
+    { label: t('dash.calories'), val: targets.calories, unit: 'kcal', color: 'var(--gold)' },
+    { label: t('dash.protein'), val: targets.protein, unit: 'g', color: '#22c55e' },
+    { label: t('nutrition.carbs'), val: targets.carbs, unit: 'g', color: 'var(--cyan)' },
+    { label: t('nutrition.fats'), val: targets.fats, unit: 'g', color: 'var(--magenta)' },
+    { label: t('nutrition.fiber'), val: targets.fiber, unit: 'g', color: '#a78bfa' },
+    { label: t('nutrition.water'), val: (targets.water / 1000).toFixed(1), unit: 'L', color: '#60a5fa' },
+  ];
+
+  const minerals = [
+    { label: t('nutrition.sodium'), val: targets.sodium, unit: 'mg', color: '#fb923c' },
+    { label: t('nutrition.potassium'), val: targets.potassium, unit: 'mg', color: '#a78bfa' },
+    { label: t('nutrition.iron'), val: targets.iron, unit: 'mg', color: '#f87171' },
+    { label: t('nutrition.calcium'), val: targets.calcium, unit: 'mg', color: '#94a3b8' },
+    { label: t('nutrition.vitaminA'), val: targets.vitaminA, unit: 'mcg', color: '#fbbf24' },
+    { label: t('nutrition.vitaminC'), val: targets.vitaminC, unit: 'mg', color: '#f97316' },
+    { label: t('nutrition.vitaminD'), val: targets.vitaminD, unit: 'IU', color: '#fde68a' },
+    { label: t('nutrition.vitaminB12'), val: targets.vitaminB12, unit: 'mcg', color: '#e879f9' },
+  ];
+
+  return (
+    <div className="glass-card animate-fade-up" style={{ padding: '1.25rem', marginBottom: '1.25rem' }}>
+      <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', letterSpacing: '0.05em', color: 'var(--gold)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        🧠 {t('profile.bmi_calculator')}
+      </h3>
+
+      {/* BMI Gauge */}
+      <div style={{ padding: '1rem', background: bmiCategory.bg, borderRadius: 10, border: `1px solid ${bmiCategory.color}30`, marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{t('profile.bmi')}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.6rem', fontWeight: 800, color: bmiCategory.color }}>
+            {bmi}
+          </span>
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: bmiCategory.color, padding: '0.2rem 0.6rem', borderRadius: 6, background: `${bmiCategory.color}20` }}>
+            {t(bmiCategory.key as any)}
+          </span>
+        </div>
+        {/* BMI Progress bar */}
+        <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', position: 'relative' }}>
+          <div style={{
+            position: 'absolute', left: 0, top: 0, height: '100%', borderRadius: 999,
+            width: `${bmiPct}%`,
+            background: `linear-gradient(90deg, var(--cyan), ${bmiCategory.color})`,
+            transition: 'width 0.8s var(--ease-out)'
+          }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem', fontSize: '0.6rem', color: 'var(--color-text-muted)' }}>
+          <span>10</span><span>18.5</span><span>25</span><span>30</span><span>40</span>
+        </div>
+      </div>
+
+      {/* Macro Targets */}
+      <div className="section-label" style={{ marginBottom: '0.5rem' }}>{t('profile.macro_targets')}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+        {macros.map(m => (
+          <div key={m.label} style={{ textAlign: 'center', background: 'rgba(0,0,0,0.25)', borderRadius: 8, padding: '0.6rem 0.4rem', border: `1px solid ${m.color}30` }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1rem', color: m.color }}>{m.val}</div>
+            <div style={{ fontSize: '0.55rem', color: m.color, opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.unit}</div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', marginTop: '0.1rem' }}>{m.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Mineral & Vitamin Targets */}
+      <div className="section-label" style={{ marginBottom: '0.5rem' }}>{t('profile.micro_targets')}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.4rem' }}>
+        {minerals.map(m => (
+          <div key={m.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.45rem 0.6rem', background: 'rgba(0,0,0,0.2)', borderRadius: 6, borderLeft: `3px solid ${m.color}` }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{m.label}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, color: m.color }}>{m.val}<span style={{ fontSize: '0.6rem', opacity: 0.7 }}>{m.unit}</span></span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -401,18 +551,48 @@ const Profile = () => {
   const [tab, setTab] = useState<'stats' | 'trophies' | 'history'>('trophies');
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const [injuries, setInjuries] = useState([
-    { id: '1', part: 'Right Shoulder', severity: 4, status: 'Recovering' },
-    { id: '2', part: 'Lower Back', severity: 2, status: 'Active' }
-  ]);
   const [showAddInjury, setShowAddInjury] = useState(false);
   const [newInjury, setNewInjury] = useState({ part: '', severity: 5 });
 
-  const handleAddInjury = () => {
+  const [showAddSupplement, setShowAddSupplement] = useState(false);
+  const [newSupplement, setNewSupplement] = useState({ name: '', dose: '', timing: '', dailyDoses: 1 });
+
+  const handleAddInjury = async () => {
     if (!newInjury.part) return;
-    setInjuries([...injuries, { id: Date.now().toString(), part: newInjury.part, severity: newInjury.severity, status: 'Active' }]);
+    await userStore.addInjury({
+      bodyPart: newInjury.part,
+      severity: newInjury.severity,
+      status: 'Active',
+      notes: ''
+    });
     setShowAddInjury(false);
     setNewInjury({ part: '', severity: 5 });
+  };
+
+  const handleDeleteInjury = async (id: string) => {
+    if (confirm('هل أنت متأكد من حذف هذه الإصابة؟')) {
+      await userStore.deleteInjury(id);
+    }
+  };
+
+  const handleAddSupplement = async () => {
+    if (!newSupplement.name) return;
+    const dosesArray = Array(Number(newSupplement.dailyDoses) || 1).fill(false);
+    await userStore.addSupplement({
+      id: Math.random().toString(36).substring(2, 9),
+      name: newSupplement.name,
+      dose: newSupplement.dose || '1 tab',
+      timing: newSupplement.timing || 'Anytime',
+      taken: dosesArray
+    });
+    setShowAddSupplement(false);
+    setNewSupplement({ name: '', dose: '', timing: '', dailyDoses: 1 });
+  };
+
+  const handleDeleteSupplement = async (id: string) => {
+    if (confirm('هل أنت متأكد من حذف هذا المكمل الغذائي؟')) {
+      await userStore.deleteSupplement(id);
+    }
   };
 
   const handleExport = async () => {
@@ -529,7 +709,7 @@ const Profile = () => {
                 onClick={() => setShowEditModal(true)}
                 style={{ color: 'var(--cyan)', fontSize: '0.7rem', padding: '0.15rem 0.5rem', border: '1px solid rgba(0,240,255,0.3)', borderRadius: 6, background: 'rgba(0,240,255,0.06)' }}
               >
-                تعديل
+                {t('profile.edit')}
               </button>
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--cyan)', marginTop: '0.15rem' }}>
@@ -556,6 +736,9 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* BMI Calculator & Nutrition Targets */}
+      <BMICalculatorSection />
+
       {/* Wearables Hub */}
       <div className="glass-card animate-fade-up" style={{ padding: '1.25rem', marginBottom: '1.25rem' }}>
         <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', letterSpacing: '0.05em', color: 'var(--cyan)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -563,8 +746,8 @@ const Profile = () => {
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={16} /> {t('profile.apple_health')}</div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>قريباً</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={16} /> {t('profile.apple_health')} / Google Fit</div>
+            <HealthSyncButton />
           </div>
           {/* Garmin — Real BLE */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: 8 }}>
@@ -573,7 +756,7 @@ const Profile = () => {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ShieldCheck size={16} /> {t('profile.whoop')}</div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>قريباً</span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>{t('common.soon' as any) || 'Coming soon'}</span>
           </div>
         </div>
       </div>
@@ -589,11 +772,11 @@ const Profile = () => {
 
         {showAddInjury && (
           <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: 8, marginBottom: '1rem' }}>
-            <input type="text" placeholder={t('profile.body_part')} value={newInjury.part}
+            <input type="text" placeholder={t('profile.body_part') || "عضو الجسم المصاب"} value={newInjury.part}
               onChange={e => setNewInjury({ ...newInjury, part: e.target.value })}
               style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--magenta)', color: '#fff', borderRadius: 4 }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{t('profile.severity')}: {newInjury.severity}/10</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>{t('profile.severity') || "شدة الألم"}: {newInjury.severity}/10</span>
               <input type="range" min="1" max="10" value={newInjury.severity} onChange={e => setNewInjury({ ...newInjury, severity: parseInt(e.target.value) })} style={{ flex: 1 }} />
             </div>
             <button className="btn-primary" onClick={handleAddInjury} style={{ width: '100%', padding: '0.5rem', fontSize: '0.8rem' }}>{t('profile.log_injury')}</button>
@@ -601,17 +784,76 @@ const Profile = () => {
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {injuries.length === 0
+          {userStore.injuries.length === 0
             ? <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>{t('profile.no_injuries')}</div>
-            : injuries.map(inj => (
+            : userStore.injuries.map(inj => (
               <div key={inj.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: 8, borderLeft: `3px solid ${inj.status === 'Active' ? 'var(--magenta)' : 'var(--color-warning)'}` }}>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{inj.part}</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{inj.bodyPart}</div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{t('profile.severity')}: {inj.severity}/10</div>
                 </div>
-                <button className="btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}
-                  onClick={() => setInjuries(injuries.map(i => i.id === inj.id ? { ...i, status: i.status === 'Active' ? 'Recovering' : 'Active' } : i))}>
-                  {inj.status === 'Active' ? t('profile.active') : t('profile.recovering')}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button className="btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}
+                    onClick={async () => {
+                      const newStatus = inj.status === 'Active' ? 'Recovering' : 'Active';
+                      await db.injuries.put({ ...inj, status: newStatus });
+                      await userStore.loadUser(userStore.activeUserId || 'default_user');
+                    }}>
+                    {inj.status === 'Active' ? t('profile.active') : t('profile.recovering')}
+                  </button>
+                  <button className="btn-secondary" style={{ padding: '0.3rem', color: 'var(--magenta)', border: '1px solid rgba(255,0,85,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => handleDeleteInjury(inj.id)}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      {/* Supplements Management */}
+      <div className="glass-card animate-fade-up" style={{ padding: '1.25rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', letterSpacing: '0.05em', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+            <Pill size={18} /> {t('profile.supplements') || "المكملات الغذائية"}
+          </h3>
+          <button onClick={() => setShowAddSupplement(!showAddSupplement)} style={{ background: 'none', border: 'none', color: 'var(--cyan)' }}><Plus size={18} /></button>
+        </div>
+
+        {showAddSupplement && (
+          <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: 8, marginBottom: '1rem' }}>
+            <input type="text" placeholder="اسم المكمل (مثال: Creatine)" value={newSupplement.name}
+              onChange={e => setNewSupplement({ ...newSupplement, name: e.target.value })}
+              style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--gold)', color: '#fff', borderRadius: 4 }} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <input type="text" placeholder="الجرعة (مثال: 5g)" value={newSupplement.dose}
+                onChange={e => setNewSupplement({ ...newSupplement, dose: e.target.value })}
+                style={{ width: '100%', padding: '0.5rem', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--gold)', color: '#fff', borderRadius: 4 }} />
+              <input type="text" placeholder="الوقت (مثال: Morning)" value={newSupplement.timing}
+                onChange={e => setNewSupplement({ ...newSupplement, timing: e.target.value })}
+                style={{ width: '100%', padding: '0.5rem', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--gold)', color: '#fff', borderRadius: 4 }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>عدد الجرعات اليومية: {newSupplement.dailyDoses}</span>
+              <input type="range" min="1" max="5" value={newSupplement.dailyDoses} onChange={e => setNewSupplement({ ...newSupplement, dailyDoses: parseInt(e.target.value) })} style={{ flex: 1 }} />
+            </div>
+            <button className="btn-primary" onClick={handleAddSupplement} style={{ width: '100%', padding: '0.5rem', fontSize: '0.8rem' }}>إضافة مكمل</button>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {userStore.supplements.length === 0
+            ? <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>لا يوجد مكملات مضافة</div>
+            : userStore.supplements.map(sup => (
+              <div key={sup.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: 8, borderLeft: '3px solid var(--gold)' }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{sup.name}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{sup.dose} · {sup.timing}</div>
+                </div>
+                <button className="btn-secondary" style={{ padding: '0.3rem', color: 'var(--magenta)', border: '1px solid rgba(255,0,85,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  onClick={() => handleDeleteSupplement(sup.id)}>
+                  <Trash2 size={13} />
                 </button>
               </div>
             ))
